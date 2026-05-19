@@ -1,6 +1,7 @@
 import { colors } from '../../cli/colors';
 import { fetchJSON } from '../http/fetch';
 import { maybeSpinner } from '../../cli/spinner';
+import { note } from '../../cli/streams';
 import { extractSkillUrl, extractSkillId, extractSkillName } from './skill-extractors';
 import type { SkillMeta, ResolveSkillsFromRecordOptions } from '../../types/install';
 
@@ -54,7 +55,8 @@ export async function resolveSkillsFromRecord(opts: ResolveSkillsFromRecordOptio
       indexSpinner.success({ text: 'Loaded skill index' });
     } catch (err) {
       indexSpinner.error({ text: 'Could not fetch skill index' });
-      console.log(`${colors.yellow('warning')} Could not fetch skill index: ${(err as Error).message}`);
+      // Side-fetch failure note, not data. Route to stderr.
+      note(`${colors.yellow('warning')} Could not fetch skill index: ${(err as Error).message}`);
     }
   }
 

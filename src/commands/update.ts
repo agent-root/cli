@@ -8,6 +8,7 @@ import {
 import { fetch } from '../services/http/fetch';
 import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
+import { note } from '../cli/streams';
 
 // --- types ---
 
@@ -35,11 +36,13 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
   if (positional.length === 0) {
     if (allKeys.length === 0) {
       console.log('No AgentRoot records installed.');
-      console.log(`${colors.dim('Install one first: npx agent-root install <domain>/<record-id>')}`);
+      note(`${colors.dim('Install one first: npx agent-root install <domain>/<record-id>')}`);
       return;
     }
 
-    console.log(`${colors.bold('Checking ' + allKeys.length + ' installed record(s)...')}\n`);
+    // Progress header before per-record outcomes — stderr so it doesn't pollute
+    // a future `update | jq` pipeline.
+    note(`${colors.bold('Checking ' + allKeys.length + ' installed record(s)...')}\n`);
 
     // Fetch every installed record's source in parallel, for N installed
     // skills this turns N sequential round-trips into one round-trip total.
@@ -85,7 +88,7 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
       console.log(JSON.stringify({ status: 'not-found', message: `No AgentRoot installation found for ${key}` }));
     } else {
       console.log(`No AgentRoot installation found for ${key}`);
-      console.log(`${colors.dim(`Install it first: npx agent-root install ${key}`)}`);
+      note(`${colors.dim(`Install it first: npx agent-root install ${key}`)}`);
     }
     return;
   }

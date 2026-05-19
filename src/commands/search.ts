@@ -3,6 +3,7 @@ import { fetchJSON } from '../services/http/fetch';
 import { getApiBase } from '../services/config/config-service';
 import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
+import { note } from '../cli/streams';
 import { confirmAction } from '../cli/confirm';
 import { RECORD_TYPES } from '../constants/record-types';
 
@@ -306,10 +307,12 @@ function displayPaginationFooter(env: SearchEnvelope, query: string, typeFilter:
   let footer = `  ${colors.dim(parts.join(' (') + ')')}`;
   // Build it manually for clarity, the join above is a relic
   footer = `  ${colors.dim(`Page ${env.page} of ${env.pages} (showing ${shown} of ${env.total} results)`)}`;
-  console.log(footer);
+  // Pagination summary + the "next:" hint are user-facing chatter, not data.
+  // Routing them to stderr lets `search --json | jq` work unredirected.
+  note(footer);
   if (env.page < env.pages) {
     const typeFlag = typeFilter ? ` --type ${typeFilter}` : '';
-    console.log(`  ${colors.dim(`next: agentroot search ${query}${typeFlag} --page ${env.page + 1}`)}`);
+    note(`  ${colors.dim(`next: agentroot search ${query}${typeFlag} --page ${env.page + 1}`)}`);
   }
 }
 
@@ -385,7 +388,7 @@ export async function promptSearch(flags: Record<string, unknown>): Promise<Sear
 
   if (results.length === 0) {
     spinner.warn({ text: 'No records found for "' + query + '"' });
-    console.log(`\n  ${colors.dim('Try a domain, skill name, or keyword (e.g. "deploy", "billing", "database")')}`);
+    note(`\n  ${colors.dim('Try a domain, skill name, or keyword (e.g. "deploy", "billing", "database")')}`);
     return null;
   }
 

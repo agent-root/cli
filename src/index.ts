@@ -1,4 +1,5 @@
 import { colors, configureColors } from './cli/colors';
+import { configureQuiet } from './cli/streams';
 import { cmdResolve } from './commands/resolve';
 import { cmdInstall } from './commands/install';
 import { cmdSearch, promptSearch } from './commands/search';
@@ -108,6 +109,7 @@ export async function main(): Promise<void> {
   // Done in this exact order so showHelp(), the version printer, and every
   // command see consistent behavior.
   configureColors(flags);
+  configureQuiet(flags);
 
   // `--version` / `-v` short-circuit, no DB/network side effects.
   if (flags.version && cmd === undefined) {

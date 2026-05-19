@@ -5,6 +5,7 @@ import { colors } from '../cli/colors';
 import { readInstalledState, removeInstalledState } from '@agent-root/core';
 import { fatal } from '../cli/fatal';
 import { confirmAction } from '../cli/confirm';
+import { note } from '../cli/streams';
 import { labelForType } from '../constants/record-types';
 
 export async function cmdUninstall(positional: string[], flags: Record<string, unknown>): Promise<void> {
@@ -21,16 +22,18 @@ export async function cmdUninstall(positional: string[], flags: Record<string, u
       fatal('Usage: agentroot uninstall <domain>/<record-id>', 'Example: agentroot uninstall nameyard.io/nameyard-billing');
     }
 
-    console.log(`\n  ${colors.bold('Installed records:')}`);
+    // Interactive picker prelude — pure UI commentary, route to stderr so a
+    // hypothetical `uninstall | jq` pipe stays clean.
+    note(`\n  ${colors.bold('Installed records:')}`);
     for (let i = 0; i < allKeys.length; i++) {
       const k = allKeys[i] as string;
       const entry = state.installed[k];
       if (!entry) continue;
       const toolCount = Object.keys(entry.tools).length;
       const typeLabel = labelForType(entry.type);
-      console.log(`  ${colors.dim((i + 1) + '.')} ${colors.bold(entry.record_id)} ${colors.dim(`[${typeLabel}]`)} ${colors.dim(`(${entry.domain})`)} ${colors.dim(`(${toolCount} tool${toolCount !== 1 ? 's' : ''})`)}`);
+      note(`  ${colors.dim((i + 1) + '.')} ${colors.bold(entry.record_id)} ${colors.dim(`[${typeLabel}]`)} ${colors.dim(`(${entry.domain})`)} ${colors.dim(`(${toolCount} tool${toolCount !== 1 ? 's' : ''})`)}`);
     }
-    console.log();
+    note();
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { select } = require('@inquirer/prompts') as {

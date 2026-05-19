@@ -4,6 +4,7 @@ import { getApiBase } from '../services/config/config-service';
 import { resolveAgentroot } from '../services/dns/dns-service';
 import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
+import { note } from '../cli/streams';
 import { RECORD_TYPES } from '../constants/record-types';
 import { searchWithFallback, selectResult, promptSearch, type SearchResult } from './search';
 import { installSkill } from '../services/install/install-skill';
@@ -55,12 +56,14 @@ export function installMcp(
     console.log(JSON.stringify(configObject, null, 2));
   }
 
-  console.log(`\n${colors.dim('For Claude Code:  Add to .claude/settings.json under "mcpServers"')}`);
-  console.log(`${colors.dim('For Cursor:       Add to .cursor/mcp.json under "mcpServers"')}`);
+  // The tool-specific install instructions and auth nag are commentary, not
+  // data; route them to stderr so the JSON config above stays on stdout.
+  note(`\n${colors.dim('For Claude Code:  Add to .claude/settings.json under "mcpServers"')}`);
+  note(`${colors.dim('For Cursor:       Add to .cursor/mcp.json under "mcpServers"')}`);
   if (record['auth'] && record['auth'] !== 'none') {
     const authLabel = colors.bold(record['auth'] as string);
-    console.log(`\n${colors.yellow('note')} This MCP server requires auth: ${authLabel}`);
-    if (record['docs']) console.log(`  See: ${record['docs'] as string}`);
+    note(`\n${colors.yellow('note')} This MCP server requires auth: ${authLabel}`);
+    if (record['docs']) note(`  See: ${record['docs'] as string}`);
   }
 }
 
@@ -97,7 +100,8 @@ export function installAgent(
   if (record['docs']) console.log(`  ${colors.dim('docs:')} ${record['docs'] as string}`);
   console.log();
   const protoLabel = record['protocol'] || 'a2a';
-  console.log(colors.dim(`Agents are accessed via their endpoint. Use the protocol (${protoLabel}) to connect.`));
+  // Educational tip, not part of the record being installed.
+  note(colors.dim(`Agents are accessed via their endpoint. Use the protocol (${protoLabel}) to connect.`));
 }
 
 // --- public: command entry point ---

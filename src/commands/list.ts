@@ -1,5 +1,6 @@
 import os from 'node:os';
 import { colors } from '../cli/colors';
+import { note } from '../cli/streams';
 import { readInstalledState } from '@agent-root/core';
 import { labelForType } from '../constants/record-types';
 
@@ -19,7 +20,8 @@ export async function cmdList(_positional: string[], flags: Record<string, unkno
 
   if (keys.length === 0) {
     console.log('No AgentRoot records installed.');
-    console.log(`${colors.dim('Install one: npx agent-root install <domain>/<record-id>')}`);
+    // Actionable tip, not data; route to stderr.
+    note(`${colors.dim('Install one: npx agent-root install <domain>/<record-id>')}`);
     return;
   }
 

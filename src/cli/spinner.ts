@@ -1,4 +1,5 @@
 import { createSpinner } from 'nanospinner';
+import { isQuiet } from './streams';
 
 export interface SpinnerLike {
   start(): SpinnerLike;
@@ -27,6 +28,10 @@ const noopSpinner: SpinnerLike = {
 };
 
 export function maybeSpinner(text: string, flags: Record<string, unknown>): SpinnerLike {
+  // No spinner in machine-readable mode (would corrupt JSON pipes via
+  // mis-timed redraws even though nanospinner writes to stderr).
   if (flags && flags.json) return noopSpinner;
+  // No spinner in quiet mode (suppress all chatter, keep data + errors).
+  if ((flags && flags.quiet) || isQuiet()) return noopSpinner;
   return createSpinner(text) as unknown as SpinnerLike;
 }

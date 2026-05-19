@@ -4,6 +4,7 @@ import os from 'node:os';
 import { colors } from '../cli/colors';
 import { detectTools } from '@agent-root/core';
 import { maybeSpinner } from '../cli/spinner';
+import { note } from '../cli/streams';
 import { confirmAction } from '../cli/confirm';
 import { RECORD_TYPES } from '../constants/record-types';
 import { type SearchResult } from './search';
@@ -168,10 +169,11 @@ function printSkillSummary(result: SearchResult, domain: string, recordId: strin
   console.log(`  ${colors.green('+')} Installed ${colors.bold('"' + (result.name || recordId) + '"')} to ${installedCount} tool${installedCount > 1 ? 's' : ''}`);
   console.log(`     Source: ${domain} | Verified: ${result.verified ? colors.green('+') : colors.yellow('-')} | Type: ${RECORD_TYPES[result.type] ?? result.type}`);
   console.log();
-  console.log(`  ${colors.dim('The skill is now available to your AI tools.')}`);
-  console.log(`  ${colors.dim('To update:')} npx agent-root update ${domain}/${recordId}`);
-  console.log(`  ${colors.dim('To remove:')} npx agent-root uninstall ${domain}/${recordId}`);
-  console.log();
+  // Followup tips, not part of the install result; route to stderr.
+  note(`  ${colors.dim('The skill is now available to your AI tools.')}`);
+  note(`  ${colors.dim('To update:')} npx agent-root update ${domain}/${recordId}`);
+  note(`  ${colors.dim('To remove:')} npx agent-root uninstall ${domain}/${recordId}`);
+  note();
 }
 
 function printMcpSummary(result: SearchResult, domain: string, recordId: string, jsonOut: JsonOut): void {
@@ -243,19 +245,20 @@ async function promptToolSelect(flags: Record<string, unknown>): Promise<string[
   const detected = detectTools();
 
   if (detected.length === 0) {
-    console.log(`\n  ${colors.dim('No AI tools detected, will install to ~/.agents/skills/')}`);
+    note(`\n  ${colors.dim('No AI tools detected, will install to ~/.agents/skills/')}`);
     return ['agents'];
   }
 
-  console.log(`\n  ${colors.bold('Detected AI tools on your machine:')}`);
+  // Interactive prelude — pure UI, route to stderr.
+  note(`\n  ${colors.bold('Detected AI tools on your machine:')}`);
   for (const t of DETECTABLE_TOOLS) {
     const found = detected.includes(t);
     const icon = found ? colors.green('[+]') : colors.dim('[ ]');
     const label = found ? TOOL_LABELS[t] : colors.dim((TOOL_LABELS[t] ?? t) + ' (not detected)');
     const p = found ? colors.dim(`(${TOOL_PATHS[t] ?? ''})`) : '';
-    console.log(`    ${icon} ${label}  ${p}`);
+    note(`    ${icon} ${label}  ${p}`);
   }
-  console.log();
+  note();
 
   if (flags['yes'] || !process.stdout.isTTY) return detected;
 
@@ -274,7 +277,7 @@ async function promptToolSelect(flags: Record<string, unknown>): Promise<string[
   }
 
   if (selected.length === 0) {
-    console.log(`  ${colors.dim('No tools selected, cancelled.')}`);
+    note(`  ${colors.dim('No tools selected, cancelled.')}`);
     return [];
   }
 

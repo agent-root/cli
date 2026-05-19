@@ -2,6 +2,7 @@ import { colors } from '../cli/colors';
 import { fetchJSON } from '../services/http/fetch';
 import { getApiBase } from '../services/config/config-service';
 import { maybeSpinner } from '../cli/spinner';
+import { note } from '../cli/streams';
 import { clampPage, clampLimit } from './search';
 
 /**
@@ -136,10 +137,11 @@ export async function cmdManifests(positional: string[], flags: Record<string, u
     renderRow(row, i);
   }
   console.log();
-  console.log(`  ${colors.dim(`Page ${envelope.page} of ${envelope.pages} (showing ${envelope.manifests.length} of ${envelope.total} manifests)`)}`);
+  // Pagination footer + "next:" hint are commentary, not data.
+  note(`  ${colors.dim(`Page ${envelope.page} of ${envelope.pages} (showing ${envelope.manifests.length} of ${envelope.total} manifests)`)}`);
   if (envelope.page < envelope.pages) {
     const typeFlag = typeFilter ? ` --type ${typeFilter}` : '';
     const qFlag = query ? ` --query ${query}` : '';
-    console.log(`  ${colors.dim(`next: agentroot manifests${qFlag}${typeFlag} --page ${envelope.page + 1}`)}`);
+    note(`  ${colors.dim(`next: agentroot manifests${qFlag}${typeFlag} --page ${envelope.page + 1}`)}`);
   }
 }

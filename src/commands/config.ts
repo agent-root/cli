@@ -1,6 +1,7 @@
 import { colors } from '../cli/colors';
 import { API_BASE } from '@agent-root/core';
 import { loadConfig, saveConfig, CONFIG_PATH } from '../services/config/config-service';
+import { note } from '../cli/streams';
 import { fatal } from '../cli/fatal';
 
 export async function cmdConfig(positional: string[], _flags: Record<string, unknown>): Promise<void> {
@@ -16,7 +17,8 @@ export async function cmdConfig(positional: string[], _flags: Record<string, unk
     current[key] = value;
     saveConfig(current);
     console.log(`${colors.green('set')} ${key} = ${value}`);
-    console.log(`${colors.dim(`Saved to ${CONFIG_PATH}`)}`);
+    // "Saved to X" is a side-note about where it landed, not the result.
+    note(`${colors.dim(`Saved to ${CONFIG_PATH}`)}`);
     return;
   }
 
@@ -32,7 +34,7 @@ export async function cmdConfig(positional: string[], _flags: Record<string, unk
     for (const k of keys) {
       console.log(`  ${colors.cyan(k)} = ${current[k]}`);
     }
-    console.log(colors.dim(`\nLoaded from ${CONFIG_PATH}`));
+    note(colors.dim(`\nLoaded from ${CONFIG_PATH}`));
     return;
   }
 

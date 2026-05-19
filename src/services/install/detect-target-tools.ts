@@ -1,4 +1,5 @@
 import { colors } from '../../cli/colors';
+import { note } from '../../cli/streams';
 import { detectTools } from '@agent-root/core';
 
 /**
@@ -14,9 +15,10 @@ export function detectTargetTools(flags: Record<string, unknown>): string[] {
 
   const detected = detectTools();
   if (detected.length === 0) {
-    if (!flags['json']) console.log(colors.dim('No AI tools detected, using cross-tool .agents/skills/ directory'));
+    // Detection commentary, route to stderr so it never pollutes JSON pipes.
+    if (!flags['json']) note(colors.dim('No AI tools detected, using cross-tool .agents/skills/ directory'));
     return ['agents'];
   }
-  if (!flags['json']) console.log(colors.dim(`Detected tools: ${detected.join(', ')}`));
+  if (!flags['json']) note(colors.dim(`Detected tools: ${detected.join(', ')}`));
   return detected;
 }

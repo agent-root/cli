@@ -4,6 +4,7 @@ import { fetchJSON } from '../services/http/fetch';
 import { resolveAgentroot } from '../services/dns/dns-service';
 import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
+import { note } from '../cli/streams';
 import { formatRecord } from '../utils/format-record';
 import { installSkill } from '../services/install/install-skill';
 import { PROTOCOL_VERSION, txtHostFor } from '../constants/protocol';
@@ -89,9 +90,11 @@ async function handleManifestMode(domain: string, manifestUrl: string, recordId:
 
   const { valid, errors } = validateManifest(manifest, domain);
   if (!valid) {
-    console.log(`${colors.yellow('warning')} Manifest has validation issues:`);
-    for (const e of errors) console.log(`  - ${e}`);
-    console.log();
+    // Validation issues are a heads-up about the publisher's manifest, not the
+    // requested data; keep stdout for record content.
+    note(`${colors.yellow('warning')} Manifest has validation issues:`);
+    for (const e of errors) note(`  - ${e}`);
+    note();
   }
 
   if (flags.json) {

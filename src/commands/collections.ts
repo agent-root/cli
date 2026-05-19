@@ -2,6 +2,7 @@ import { colors } from '../cli/colors';
 import { fetchJSON } from '../services/http/fetch';
 import { getApiBase } from '../services/config/config-service';
 import { maybeSpinner } from '../cli/spinner';
+import { note } from '../cli/streams';
 import { fatal } from '../cli/fatal';
 
 interface CollectionSummary {
@@ -68,7 +69,8 @@ async function renderCollectionList(flags: Record<string, unknown>): Promise<voi
     if (row) renderCollectionSummary(row, i);
   }
   console.log();
-  console.log(`  ${colors.dim('View one:')} ${colors.cyan('agent-root collections <slug>')}`);
+  // Drill-down tip, not data; route to stderr.
+  note(`  ${colors.dim('View one:')} ${colors.cyan('agent-root collections <slug>')}`);
 }
 
 function renderCollectionItem(item: CollectionItem, idx: number): void {
