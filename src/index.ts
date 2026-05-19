@@ -30,6 +30,7 @@ import {
 } from './commands/help';
 import { parseArgs, applyEnvDefaults } from './cli/parse-args';
 import { fatal } from './cli/fatal';
+import { suggestCommand } from './cli/suggest';
 import { DOCS_URL } from './constants/protocol';
 
 /**
@@ -268,8 +269,16 @@ export async function main(): Promise<void> {
       case 'completion':
         cmdCompletion(positional, flags);
         break;
-      default:
-        fatal(`Unknown command: ${cmd}. Run "agentroot help" for usage.`, EXIT.USAGE);
+      default: {
+        // Levenshtein-based "did you mean?" — catches `reslove`→`resolve`,
+        // `seach`→`search`, etc. Returns null for inputs more than 2 edits
+        // away, in which case we fall back to the generic help pointer.
+        const suggestion = suggestCommand(cmd);
+        const hint = suggestion
+          ? `Did you mean: agentroot ${suggestion}?`
+          : 'Run "agentroot help" for usage.';
+        fatal(`Unknown command: ${cmd}`, hint, EXIT.USAGE);
+      }
     }
   } catch (err) {
     const e = err as NodeJS.ErrnoException;
