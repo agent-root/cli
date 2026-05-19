@@ -22,6 +22,7 @@ import { cmdManifests } from './commands/manifests';
 import { cmdCollections } from './commands/collections';
 import { cmdSubmit } from './commands/submit';
 import { cmdVersion, printShortVersion } from './commands/version';
+import { cmdCompletion, helpCompletion } from './commands/completion';
 import {
   helpResolve, helpSearch, helpInstall, helpList, helpUpdate, helpUninstall,
   helpInit, helpValidate, helpConfig, helpStats, helpHealth, helpManifests,
@@ -53,6 +54,7 @@ const PER_COMMAND_HELP: Record<string, () => void> = {
   collections: helpCollections,
   submit: helpSubmit,
   version: helpVersion,
+  completion: helpCompletion,
 };
 
 export function showHelp(): void {
@@ -82,7 +84,10 @@ ${colors.bold('REGISTRY')}
   ${colors.cyan('health')}                             Probe the registry API
   ${colors.cyan('manifests')} [--query <q>]            List registered manifests
   ${colors.cyan('collections')} [<slug>]               Browse curated collections
+
+${colors.bold('TOOLING')}
   ${colors.cyan('version')}                            Print version + runtime + config info
+  ${colors.cyan('completion')} <shell>                 Print shell completion (bash, zsh, fish, pwsh)
 
   Run ${colors.cyan('agent-root <command> --help')} for command-specific flags and exit codes.
 
@@ -143,6 +148,9 @@ ${colors.bold('EXAMPLES')}
 
   ${colors.dim('# Bug report? Paste this first.')}
   npx agent-root version
+
+  ${colors.dim('# Set up shell completion')}
+  npx agent-root completion zsh > "\${fpath[1]}/_agent-root"
 
 ${colors.bold('PROTOCOL')}
   AgentRoot resolves AI capabilities via DNS TXT records + JSON manifests.
@@ -256,6 +264,9 @@ export async function main(): Promise<void> {
         break;
       case 'version':
         cmdVersion(positional, flags);
+        break;
+      case 'completion':
+        cmdCompletion(positional, flags);
         break;
       default:
         fatal(`Unknown command: ${cmd}. Run "agentroot help" for usage.`, EXIT.USAGE);

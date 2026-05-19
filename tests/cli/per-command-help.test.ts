@@ -4,6 +4,7 @@ import {
   helpInit, helpValidate, helpConfig, helpStats, helpHealth, helpManifests,
   helpCollections, helpSubmit, helpVersion,
 } from '../../src/commands/help';
+import { helpCompletion } from '../../src/commands/completion';
 
 // Each test in this file follows the same pattern: spy on console.log,
 // invoke the help function, and assert the captured output contains the
@@ -49,6 +50,7 @@ describe('per-command help', () => {
   it('helpCollections prints collections-specific page', makeHelpCase('collections', helpCollections));
   it('helpSubmit prints submit-specific page', makeHelpCase('submit', helpSubmit, [/--manifest-url/]));
   it('helpVersion prints version-specific page', makeHelpCase('version', helpVersion));
+  it('helpCompletion prints completion-specific page', makeHelpCase('completion', helpCompletion, [/bash/, /zsh/, /fish/]));
 
   it('every help page lists at least one EXIT CODE', () => {
     // Catch a drift where a help page ships without the exit code table.
@@ -57,7 +59,7 @@ describe('per-command help', () => {
     const pages = [
       helpResolve, helpSearch, helpInstall, helpList, helpUpdate, helpUninstall,
       helpInit, helpValidate, helpConfig, helpStats, helpHealth, helpManifests,
-      helpCollections, helpSubmit, helpVersion,
+      helpCollections, helpSubmit, helpVersion, helpCompletion,
     ];
     for (const fn of pages) {
       logSpy.mockClear();
