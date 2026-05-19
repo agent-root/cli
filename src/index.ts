@@ -68,11 +68,23 @@ ${colors.bold('OPTIONS')}
   --manifest-url     Explicit manifest URL for submit
   --yes, -y          Auto-confirm all prompts (for CI/scripts)
   --force, -f        Overwrite existing files
-  --quiet, -q        Suppress non-essential output
+  --quiet, -q        Suppress non-essential output (spinners + notes)
   --no-install       Skip auto-install when resolving skill= records
+  --no-color         Disable ANSI color (also auto-off in non-TTY)
 
   Flag names accept both kebab-case (--manifest-url) and camelCase (--manifestUrl).
   Use --key=value or --key value. Use -- to end option parsing.
+
+${colors.bold('ENVIRONMENT')}
+  NO_COLOR=1               Disable ANSI color (no-color.org standard)
+  CI=true                  Imply --yes and --no-color (no prompts, plain text)
+  AGENTROOT_YES=1          Imply --yes
+  AGENTROOT_JSON=1         Imply --json
+  AGENTROOT_NO_COLOR=1     Imply --no-color (namespaced variant)
+  AGENTROOT_API_BASE=<url> Override the registry API base
+
+  Spinners, comments, and progress chatter all go to stderr, so
+  \`agent-root <cmd> --json | jq\` works without redirecting 2>/dev/null.
 
 ${colors.bold('EXAMPLES')}
   ${colors.dim('# Resolve a domain\'s capabilities directly via DNS')}

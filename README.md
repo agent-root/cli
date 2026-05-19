@@ -132,11 +132,14 @@ OPTIONS
   --manifest-url     Explicit manifest URL for submit
   --yes, -y          Auto-confirm all prompts (for CI/scripts)
   --force, -f        Overwrite existing files
-  --quiet, -q        Suppress non-essential output
+  --quiet, -q        Suppress non-essential output (spinners + notes)
   --no-install       Skip auto-install when resolving skill= records
+  --no-color         Disable ANSI color (also auto-off in non-TTY)
 ```
 
 Flag names accept both kebab-case (`--manifest-url`) and camelCase (`--manifestUrl`). Use `--key=value` or `--key value`. Pass `--` to stop option parsing (any subsequent token is positional, even if it starts with `--`).
+
+All spinners, progress notes, and chatter go to **stderr**. Data and JSON output go to **stdout**. That means `agent-root <cmd> --json | jq .` works without `2>/dev/null` — pipes never carry color codes or progress lines.
 
 Run `agent-root <command> --help` for command-specific flags.
 
@@ -485,6 +488,22 @@ Override the API base at runtime with the `AGENTROOT_API_BASE` environment varia
 ```bash
 AGENTROOT_API_BASE=https://my-mirror.example.com agent-root search billing
 ```
+
+### Environment variables
+
+The CLI reads the following environment variables (precedence: explicit flag > namespaced env > standard env > `CI` default):
+
+| Variable | Effect |
+|---|---|
+| `NO_COLOR=1` | Disable ANSI color ([no-color.org](https://no-color.org)) |
+| `FORCE_COLOR=0` | Disable ANSI color (Node convention) |
+| `CI=true` | Imply `--yes` and `--no-color` (no prompts, plain text — matches `gh`, `pnpm`, `biome`) |
+| `AGENTROOT_YES=1` | Imply `--yes` (skip all confirmation prompts) |
+| `AGENTROOT_JSON=1` | Imply `--json` (machine-readable output) |
+| `AGENTROOT_NO_COLOR=1` | Imply `--no-color` (namespaced variant) |
+| `AGENTROOT_API_BASE=<url>` | Override the registry API base |
+
+Explicit flags always win. For example, `CI=true agent-root install foo --no-yes` still prompts, because `--no-yes` was typed.
 
 No API key is required. The endpoints the CLI calls are public-read (`/api/records`, `/api/manifests`, `/api/manifests/{domain}`, `/api/find-skills`, `/api/stats`, `/api/health`, `/api/collections`, `/api/collections/{slug}`) plus one public-write (`/api/submit`, which the registry verifies via DNS before indexing).
 
