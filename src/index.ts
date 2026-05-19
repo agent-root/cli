@@ -1,3 +1,8 @@
+// IMPORTANT: env-preamble must be the very first import. It mutates
+// `process.env` so picocolors/nanospinner see the right color setting when
+// they evaluate `isColorSupported` at their own module-load time. Moving this
+// even one line later silently re-enables color under CI=true and similar.
+import './cli/env-preamble';
 import { colors, configureColors } from './cli/colors';
 import { configureQuiet } from './cli/streams';
 import { cmdResolve } from './commands/resolve';
@@ -15,7 +20,7 @@ import { cmdManifests } from './commands/manifests';
 import { cmdCollections } from './commands/collections';
 import { cmdSubmit } from './commands/submit';
 import { cmdVersion, printShortVersion } from './commands/version';
-import { parseArgs } from './cli/parse-args';
+import { parseArgs, applyEnvDefaults } from './cli/parse-args';
 import { fatal } from './cli/fatal';
 import { DOCS_URL } from './constants/protocol';
 
@@ -104,6 +109,11 @@ ${colors.bold('PROTOCOL')}
 export async function main(): Promise<void> {
   const isTTY = !!process.stdout.isTTY;
   const { cmd, positional, flags } = parseArgs(process.argv);
+
+  // Apply env-based defaults (CI, AGENTROOT_YES/JSON/NO_COLOR, NO_COLOR) before
+  // anything reads from flags. Explicit CLI flags still win — this only fills
+  // in unset keys, matching 12-Factor #6 ("Config in env").
+  applyEnvDefaults(flags);
 
   // Wire color and quiet state from flags + env *before* anything writes output.
   // Done in this exact order so showHelp(), the version printer, and every

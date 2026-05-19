@@ -76,6 +76,59 @@ function setFlag(flags: Record<string, string | boolean>, opts: SetFlagOptions):
   flags[canonical] = opts.value;
 }
 
+/**
+ * Apply environment-variable defaults onto a parsed-flag map.
+ *
+ * Precedence (highest first):
+ *   1. Explicit CLI flag (whatever \`parseArgs\` already wrote — including a
+ *      deliberate \`false\` from \`--no-yes\` style negation).
+ *   2. Namespaced env: \`AGENTROOT_YES\`, \`AGENTROOT_JSON\`, \`AGENTROOT_NO_COLOR\`.
+ *   3. \`CI=<any-non-empty>\`: implies \`--yes\` + \`--no-color\` (matches gh, pnpm,
+ *      and most CI-aware CLIs).
+ *   4. Defaults baked into the rest of the codebase (nothing here writes them).
+ *
+ * Skips a key entirely if the user already typed an explicit boolean for it,
+ * so \`CI=true agent-root install foo --no-yes\` still prompts (matches POSIX
+ * convention of "explicit flag wins").
+ */
+export function applyEnvDefaults(
+  flags: Record<string, string | boolean>,
+  env: NodeJS.ProcessEnv = process.env,
+): void {
+  const inCi = !!env['CI'] && env['CI'].length > 0;
+
+  // --yes / -y default.
+  if (flags['yes'] === undefined) {
+    if (env['AGENTROOT_YES'] && env['AGENTROOT_YES'].length > 0) {
+      flags['yes'] = true;
+    } else if (inCi) {
+      flags['yes'] = true;
+    }
+  }
+
+  // --json / -j default.
+  if (flags['json'] === undefined) {
+    if (env['AGENTROOT_JSON'] && env['AGENTROOT_JSON'].length > 0) {
+      flags['json'] = true;
+    }
+    // NB: CI does NOT auto-imply --json — too breaking for existing scripts
+    // that rely on the human-readable output under CI.
+  }
+
+  // --no-color default. \`NO_COLOR\` (the standard) is honored directly by the
+  // colors module, but we *also* set the flag so downstream readers see a
+  // consistent shape regardless of which path triggered it.
+  if (flags['noColor'] === undefined) {
+    if (env['AGENTROOT_NO_COLOR'] && env['AGENTROOT_NO_COLOR'].length > 0) {
+      flags['noColor'] = true;
+    } else if (env['NO_COLOR'] && env['NO_COLOR'].length > 0) {
+      flags['noColor'] = true;
+    } else if (inCi) {
+      flags['noColor'] = true;
+    }
+  }
+}
+
 export function parseArgs(argv: string[]): ParsedArgs {
   const args = argv.slice(2);
   // If the first token looks like a flag (e.g. `agent-root --version`), there
