@@ -2,6 +2,8 @@ import { colors } from '../cli/colors';
 import { fetchJSON } from '../services/http/fetch';
 import { getApiBase } from '../services/config/config-service';
 import { maybeSpinner } from '../cli/spinner';
+import { fatal } from '../cli/fatal';
+import { EXIT } from '../cli/exit-codes';
 
 interface HealthResponse {
   status?: string;
@@ -22,12 +24,11 @@ export async function cmdHealth(_positional: string[], flags: Record<string, unk
     data = await fetchJSON<HealthResponse>(`${getApiBase()}/api/health`);
   } catch (err) {
     spinner.error({ text: 'Health check failed' });
-    if (flags['json']) {
-      console.log(JSON.stringify({ status: 'unreachable', error: (err as Error).message }, null, 2));
-    } else {
-      console.log(`  ${colors.red('×')} ${(err as Error).message}`);
-    }
-    process.exit(1);
+    // Route through fatal() so --json gets the standard error envelope, and
+    // the exit code reflects "service unreachable" rather than generic 1.
+    const e = err as NodeJS.ErrnoException;
+    const code = (e.code === 'ENOTFOUND' || e.code === 'EAI_AGAIN') ? EXIT.NOHOST : EXIT.UNAVAILABLE;
+    fatal((err as Error).message, 'The registry is unreachable. Check your connection.', code);
   }
 
   const ok = data.status === 'ok' && data.db === 'connected';
@@ -35,7 +36,7 @@ export async function cmdHealth(_positional: string[], flags: Record<string, unk
   if (flags['json']) {
     spinner.stop();
     console.log(JSON.stringify(data, null, 2));
-    if (!ok) process.exit(1);
+    if (!ok) process.exit(EXIT.UNAVAILABLE);
     return;
   }
 
@@ -53,5 +54,5 @@ export async function cmdHealth(_positional: string[], flags: Record<string, unk
     console.log(`    ${colors.dim('ts:')}     ${data.ts}`);
   }
 
-  if (!ok) process.exit(1);
+  if (!ok) process.exit(EXIT.UNAVAILABLE);
 }

@@ -5,6 +5,7 @@
 import './cli/env-preamble';
 import { colors, configureColors } from './cli/colors';
 import { configureQuiet } from './cli/streams';
+import { EXIT } from './cli/exit-codes';
 import { cmdResolve } from './commands/resolve';
 import { cmdInstall } from './commands/install';
 import { cmdSearch, promptSearch } from './commands/search';
@@ -149,8 +150,11 @@ export async function main(): Promise<void> {
       await promptSearch(flags);
       return;
     }
+    // Non-interactive / piped invocation with no command is a script error,
+    // not a help request. Print usage to stderr and exit with USAGE so
+    // shell scripts treat `agent-root | foo` as the bug it is.
     showHelp();
-    return;
+    process.exit(EXIT.USAGE);
   }
 
   // Install default skills on first run (non-blocking, silent on failure)
@@ -205,12 +209,23 @@ export async function main(): Promise<void> {
         cmdVersion(positional, flags);
         break;
       default:
-        fatal(`Unknown command: ${cmd}. Run "agentroot help" for usage.`);
+        fatal(`Unknown command: ${cmd}. Run "agentroot help" for usage.`, EXIT.USAGE);
     }
   } catch (err) {
     const e = err as NodeJS.ErrnoException;
-    if (e.code === 'ENOTFOUND' || e.code === 'ECONNREFUSED') {
-      fatal('Could not connect to agentroot.io.', 'Check your internet connection or try again in a moment.');
+    // Map low-level OS / DNS / network errno onto sysexits-style codes so
+    // shell scripts can branch on the failure mode. ENOTFOUND + EAI_AGAIN
+    // indicate the DNS name didn't resolve at all (NOHOST). ECONNREFUSED
+    // is a reachable host that closed the door (UNAVAILABLE). EACCES is
+    // a permissions denial during fs writes (NOPERM, see install/uninstall).
+    if (e.code === 'ENOTFOUND' || e.code === 'EAI_AGAIN') {
+      fatal('Could not resolve agentroot.io.', 'Check your DNS or try again in a moment.', EXIT.NOHOST);
+    }
+    if (e.code === 'ECONNREFUSED') {
+      fatal('Could not connect to agentroot.io.', 'The registry may be down. Try again in a moment.', EXIT.UNAVAILABLE);
+    }
+    if (e.code === 'EACCES' || e.code === 'EPERM') {
+      fatal(e.message, 'Check file permissions for ~/.agentroot and ~/.claude/skills.', EXIT.NOPERM);
     }
     fatal(e.message, 'Run with --json for machine-readable output, or report at https://github.com/d3-inc/agentroot/issues');
   }

@@ -4,6 +4,7 @@ import os from 'node:os';
 import { colors } from '../cli/colors';
 import { readInstalledState, removeInstalledState } from '@agent-root/core';
 import { fatal } from '../cli/fatal';
+import { EXIT } from '../cli/exit-codes';
 import { confirmAction } from '../cli/confirm';
 import { note } from '../cli/streams';
 import { labelForType } from '../constants/record-types';
@@ -19,7 +20,7 @@ export async function cmdUninstall(positional: string[], flags: Record<string, u
     }
 
     if (!process.stdout.isTTY || flags['json']) {
-      fatal('Usage: agentroot uninstall <domain>/<record-id>', 'Example: agentroot uninstall nameyard.io/nameyard-billing');
+      fatal('Usage: agentroot uninstall <domain>/<record-id>', 'Example: agentroot uninstall nameyard.io/nameyard-billing', EXIT.USAGE);
     }
 
     // Interactive picker prelude — pure UI commentary, route to stderr so a
@@ -58,7 +59,7 @@ export async function cmdUninstall(positional: string[], flags: Record<string, u
   const input = positional[0] as string;
   const slashIdx = input.indexOf('/');
   if (slashIdx === -1) {
-    fatal('Expected format: <domain>/<record-id>', 'Example: agentroot uninstall nameyard.io/nameyard-billing');
+    fatal('Expected format: <domain>/<record-id>', 'Example: agentroot uninstall nameyard.io/nameyard-billing', EXIT.USAGE);
   }
 
   const domain = input.slice(0, slashIdx);
@@ -113,6 +114,12 @@ export async function cmdUninstall(positional: string[], flags: Record<string, u
       console.log(`\n${colors.green('✓')} ${key} uninstalled (${removedList.length} tool copies removed)`);
     }
   } catch (err) {
-    fatal(`Failed to uninstall ${key}: ${(err as Error).message}`, 'Check file permissions and try again');
+    // fs.rmSync failures during uninstall almost always come from EACCES /
+    // EPERM (read-only dir, system-managed link, locked file). NOPERM (77)
+    // matches sysexits "permission denied" and lets scripts retry under sudo
+    // or escalate to the user without conflating it with network errors.
+    const e = err as NodeJS.ErrnoException;
+    const code = (e.code === 'EACCES' || e.code === 'EPERM') ? EXIT.NOPERM : EXIT.GENERIC;
+    fatal(`Failed to uninstall ${key}: ${(err as Error).message}`, 'Check file permissions and try again', code);
   }
 }

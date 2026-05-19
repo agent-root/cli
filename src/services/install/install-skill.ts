@@ -1,5 +1,6 @@
 import { colors } from '../../cli/colors';
 import { fatal } from '../../cli/fatal';
+import { EXIT } from '../../cli/exit-codes';
 import { detectTargetTools } from './detect-target-tools';
 import { gatherSkillsToInstall } from './gather-skills';
 import { installOneSkill } from './install-one-skill';
@@ -20,6 +21,7 @@ export async function installSkill(opts: InstallSkillOptions): Promise<void> {
     fatal(
       `No skills found for ${installAll ? domain : domain + '/' + recordId}`,
       'Is the record ID correct? Try: agentroot resolve ' + domain,
+      EXIT.NOHOST,
     );
   }
 

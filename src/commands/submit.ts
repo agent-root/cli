@@ -3,6 +3,7 @@ import { postJSON } from '../services/http/fetch';
 import { getApiBase } from '../services/config/config-service';
 import { resolveAgentroot } from '../services/dns/dns-service';
 import { fatal } from '../cli/fatal';
+import { EXIT } from '../cli/exit-codes';
 import { maybeSpinner } from '../cli/spinner';
 import { txtHostFor } from '../constants/protocol';
 
@@ -113,7 +114,7 @@ async function buildSubmitBody(domain: string, manifestUrlFlag: string | undefin
 export async function cmdSubmit(positional: string[], flags: Record<string, unknown>): Promise<void> {
   const domain = positional[0];
   if (!domain) {
-    fatal('Usage: agent-root submit <domain> [--manifest-url <url>]', 'Example: agent-root submit mycompany.com');
+    fatal('Usage: agent-root submit <domain> [--manifest-url <url>]', 'Example: agent-root submit mycompany.com', EXIT.USAGE);
   }
 
   // parseArgs normalizes --manifest-url to camelCase, so we only read one key.
@@ -128,10 +129,12 @@ export async function cmdSubmit(positional: string[], flags: Record<string, unkn
     response = await postJSON<SubmitResponse>(`${getApiBase()}/api/submit`, body);
   } catch (err) {
     spinner.error({ text: `Could not submit ${domain}` });
-    if (flags['json']) {
-      console.log(JSON.stringify({ success: false, error: (err as Error).message }, null, 2));
-    }
-    fatal((err as Error).message);
+    // Submit failures are almost always "registry refused/unreachable", route
+    // through the standard fatal() error envelope so --json mode produces
+    // the same shape as every other command (no special manual JSON.stringify).
+    const e = err as NodeJS.ErrnoException;
+    const code = (e.code === 'ENOTFOUND' || e.code === 'EAI_AGAIN') ? EXIT.NOHOST : EXIT.UNAVAILABLE;
+    fatal((err as Error).message, 'Check your internet connection and that the registry is reachable.', code);
   }
 
   const data = response.body;
@@ -139,7 +142,14 @@ export async function cmdSubmit(positional: string[], flags: Record<string, unkn
   if (flags['json']) {
     spinner.stop();
     console.log(JSON.stringify(data, null, 2));
-    if (!data.success) process.exit(1);
+    if (!data.success) {
+      // Same code mapping as the human path below so script callers see
+      // a consistent exit-code → failure-mode mapping regardless of --json.
+      const validation = (data.validation_errors?.length ?? 0) > 0;
+      if (validation) process.exit(EXIT.PROTOCOL);
+      if (data.verification_required || data.instructions?.agentroot?.value) process.exit(EXIT.NOHOST);
+      process.exit(EXIT.GENERIC);
+    }
     return;
   }
 
@@ -181,5 +191,9 @@ export async function cmdSubmit(positional: string[], flags: Record<string, unkn
     printInstructions(domain, data.instructions);
   }
 
-  process.exit(1);
+  // PROTOCOL (76) when the registry rejected the manifest for schema reasons,
+  // NOHOST (68) when DNS verification is still pending, GENERIC otherwise.
+  if (hadValidation) process.exit(EXIT.PROTOCOL);
+  if (data.verification_required || data.instructions?.agentroot?.value) process.exit(EXIT.NOHOST);
+  process.exit(EXIT.GENERIC);
 }

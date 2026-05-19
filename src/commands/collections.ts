@@ -4,6 +4,7 @@ import { getApiBase } from '../services/config/config-service';
 import { maybeSpinner } from '../cli/spinner';
 import { note } from '../cli/streams';
 import { fatal } from '../cli/fatal';
+import { EXIT } from '../cli/exit-codes';
 
 interface CollectionSummary {
   slug?: string;
@@ -92,7 +93,7 @@ async function renderCollectionDetail(slug: string, flags: Record<string, unknow
     data = await fetchJSON<CollectionDetailResponse>(`${getApiBase()}/api/collections/${encodeURIComponent(slug)}`);
   } catch (err) {
     spinner.error({ text: 'Could not fetch collection' });
-    fatal(`Collection "${slug}" not found: ${(err as Error).message}`, 'Try: agent-root collections');
+    fatal(`Collection "${slug}" not found: ${(err as Error).message}`, 'Try: agent-root collections', EXIT.UNAVAILABLE);
   }
 
   if (flags['json']) {

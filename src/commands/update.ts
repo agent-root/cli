@@ -7,6 +7,7 @@ import {
 } from '@agent-root/core';
 import { fetch } from '../services/http/fetch';
 import { fatal } from '../cli/fatal';
+import { EXIT } from '../cli/exit-codes';
 import { maybeSpinner } from '../cli/spinner';
 import { note } from '../cli/streams';
 
@@ -76,7 +77,7 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
 
   const input = positional[0] as string;
   const slashIdx = input.indexOf('/');
-  if (slashIdx === -1) fatal('Expected format: <domain>/<record-id>', 'Example: agentroot update doma.xyz/doma-protocol');
+  if (slashIdx === -1) fatal('Expected format: <domain>/<record-id>', 'Example: agentroot update doma.xyz/doma-protocol', EXIT.USAGE);
 
   const domain = input.slice(0, slashIdx);
   const recordId = input.slice(slashIdx + 1);
@@ -95,7 +96,7 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
 
   const sourceUrl = entry.source_url;
   if (!sourceUrl) {
-    fatal(`No source_url found in install state for ${key}`, 'Re-install to fix: npx agent-root install ' + key);
+    fatal(`No source_url found in install state for ${key}`, 'Re-install to fix: npx agent-root install ' + key, EXIT.CONFIG);
   }
 
   const updateSpinner = maybeSpinner(`Fetching latest ${key}...`, flags).start();
@@ -105,7 +106,7 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
     content = await fetch(sourceUrl);
   } catch (err) {
     updateSpinner.error({ text: `Failed to fetch ${key}: ${(err as Error).message}` });
-    fatal(`Network error fetching ${sourceUrl}`, 'Check your internet connection and try again');
+    fatal(`Network error fetching ${sourceUrl}`, 'Check your internet connection and try again', EXIT.UNAVAILABLE);
   }
 
   const newHash = hashContent(content);

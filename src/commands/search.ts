@@ -2,6 +2,7 @@ import { colors } from '../cli/colors';
 import { fetchJSON } from '../services/http/fetch';
 import { getApiBase } from '../services/config/config-service';
 import { fatal } from '../cli/fatal';
+import { EXIT } from '../cli/exit-codes';
 import { maybeSpinner } from '../cli/spinner';
 import { note } from '../cli/streams';
 import { confirmAction } from '../cli/confirm';
@@ -402,7 +403,7 @@ export async function promptSearch(flags: Record<string, unknown>): Promise<Sear
 export async function cmdSearch(positional: string[], flags: Record<string, unknown>): Promise<void> {
   const query = positional.join(' ');
   if (!query) {
-    fatal('Usage: agentroot search <query> [--type agent|mcp|skill|a2a|payment]', 'Example: agentroot search billing');
+    fatal('Usage: agentroot search <query> [--type agent|mcp|skill|a2a|payment]', 'Example: agentroot search billing', EXIT.USAGE);
   }
 
   const typeFilter = (flags['type'] as string) ?? '';

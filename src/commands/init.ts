@@ -3,6 +3,7 @@ import path from 'node:path';
 import { colors } from '../cli/colors';
 import { MANIFEST_PATH } from '@agent-root/core';
 import { fatal } from '../cli/fatal';
+import { EXIT } from '../cli/exit-codes';
 import { getApiBase } from '../services/config/config-service';
 import { buildTxtRecord, txtHostFor } from '../constants/protocol';
 
@@ -13,7 +14,11 @@ export async function cmdInit(positional: string[], flags: Record<string, unknow
   const dir = path.dirname(outputPath);
 
   if (fs.existsSync(outputPath) && !flags.force) {
-    fatal(`${outputPath} already exists. Use --force to overwrite.`);
+    // File already exists and user didn't pass --force — sysexits 66 (NOINPUT)
+    // is the closest fit ("cannot open input"), or arguably USAGE since the
+    // fix is a flag. We choose NOINPUT because scripts already encode "the
+    // file blocking me" semantics that way.
+    fatal(`${outputPath} already exists. Use --force to overwrite.`, EXIT.NOINPUT);
   }
 
   const domain = (flags.domain as string) || 'yourdomain.com';

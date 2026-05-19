@@ -3,6 +3,7 @@ import { fetchJSON } from '../services/http/fetch';
 import { getApiBase } from '../services/config/config-service';
 import { resolveAgentroot } from '../services/dns/dns-service';
 import { fatal } from '../cli/fatal';
+import { EXIT } from '../cli/exit-codes';
 import { maybeSpinner } from '../cli/spinner';
 import { note } from '../cli/streams';
 import { RECORD_TYPES } from '../constants/record-types';
@@ -112,7 +113,7 @@ export async function cmdInstall(positional: string[], flags: Record<string, unk
       await promptSearch(flags);
       return;
     }
-    fatal('Usage: agentroot install <domain>/<record-id> [--tool claude|codex|gemini|cursor|agents] [--project]');
+    fatal('Usage: agentroot install <domain>/<record-id> [--tool claude|codex|gemini|cursor|agents] [--project]', EXIT.USAGE);
   }
 
   const input = positional[0] as string;
@@ -124,20 +125,22 @@ export async function cmdInstall(positional: string[], flags: Record<string, unk
     fatal(
       'Expected format: <domain>/<record-id> or <domain> --all',
       'Example: agentroot install doma.xyz/doma-protocol --tool claude',
+      EXIT.USAGE,
     );
   }
 
   const domain = installAll ? input : input.slice(0, slashIdx);
   const recordId = installAll ? null : input.slice(slashIdx + 1);
 
-  if (!domain) fatal('Missing domain', 'Example: agentroot install doma.xyz/doma-protocol');
-  if (!installAll && !recordId) fatal('Missing record ID', 'Example: agentroot install doma.xyz/doma-protocol');
+  if (!domain) fatal('Missing domain', 'Example: agentroot install doma.xyz/doma-protocol', EXIT.USAGE);
+  if (!installAll && !recordId) fatal('Missing record ID', 'Example: agentroot install doma.xyz/doma-protocol', EXIT.USAGE);
 
   // Path traversal protection: reject record IDs that could write outside skill directory
   if (recordId && (recordId.includes('..') || recordId.includes('/') || recordId.includes('\\'))) {
     fatal(
       'Invalid record ID. Must not contain path separators.',
       'Record IDs are simple identifiers like "payments" or "db-tools"',
+      EXIT.USAGE,
     );
   }
 

@@ -3,6 +3,7 @@ import { API_BASE } from '@agent-root/core';
 import { loadConfig, saveConfig, CONFIG_PATH } from '../services/config/config-service';
 import { note } from '../cli/streams';
 import { fatal } from '../cli/fatal';
+import { EXIT } from '../cli/exit-codes';
 
 export async function cmdConfig(positional: string[], _flags: Record<string, unknown>): Promise<void> {
   const subCmd = positional[0];
@@ -11,7 +12,7 @@ export async function cmdConfig(positional: string[], _flags: Record<string, unk
     const key = positional[1];
     const value = positional[2];
     if (!key || !value) {
-      fatal('Usage: agentroot config set <key> <value>', 'Example: agentroot config set api-url http://localhost:4747');
+      fatal('Usage: agentroot config set <key> <value>', 'Example: agentroot config set api-url http://localhost:4747', EXIT.USAGE);
     }
     const current = loadConfig();
     current[key] = value;
@@ -38,5 +39,5 @@ export async function cmdConfig(positional: string[], _flags: Record<string, unk
     return;
   }
 
-  fatal(`Unknown config subcommand: ${subCmd}`, 'Usage: agentroot config set <key> <value>  |  agentroot config get');
+  fatal(`Unknown config subcommand: ${subCmd}`, 'Usage: agentroot config set <key> <value>  |  agentroot config get', EXIT.USAGE);
 }

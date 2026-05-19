@@ -3,6 +3,7 @@ import { validateManifest, parseAllTxt, getHandler, type ParsedRecord } from '@a
 import { fetchJSON } from '../services/http/fetch';
 import { resolveAgentroot } from '../services/dns/dns-service';
 import { fatal } from '../cli/fatal';
+import { EXIT } from '../cli/exit-codes';
 import { maybeSpinner } from '../cli/spinner';
 import { note } from '../cli/streams';
 import { formatRecord } from '../utils/format-record';
@@ -82,7 +83,9 @@ async function handleManifestMode(domain: string, manifestUrl: string, recordId:
     manifest = await fetchJSON<Record<string, unknown>>(manifestUrl);
   } catch (err) {
     spinner.error({ text: 'Could not fetch manifest' });
-    fatal(`Could not fetch manifest at ${manifestUrl}: ${(err as Error).message}`, 'Check: ' + manifestUrl);
+    // Registry / origin couldn't serve the manifest — UNAVAILABLE (69) is the
+    // sysexits hint that the remote is down/unreachable but the name resolved.
+    fatal(`Could not fetch manifest at ${manifestUrl}: ${(err as Error).message}`, 'Check: ' + manifestUrl, EXIT.UNAVAILABLE);
   }
 
   const records = manifest.records as Record<string, unknown>[] || [];
@@ -106,7 +109,7 @@ async function handleManifestMode(domain: string, manifestUrl: string, recordId:
 
   const filtered = recordId ? records.filter(r => r.id === recordId) : records;
   if (recordId && filtered.length === 0) {
-    fatal(`Record "${recordId}" not found. Available: ${records.map(r => r.id).join(', ')}`);
+    fatal(`Record "${recordId}" not found. Available: ${records.map(r => r.id).join(', ')}`, EXIT.USAGE);
   }
 
   for (const r of filtered) {
@@ -126,7 +129,7 @@ async function handleMultiRecordDns(domain: string, txtRecords: string[], flags:
   const records = parseAllTxt(txtRecords, domain);
 
   if (records.length === 0) {
-    fatal(`No ${PROTOCOL_VERSION} records found at ${txtHostFor(domain)}`);
+    fatal(`No ${PROTOCOL_VERSION} records found at ${txtHostFor(domain)}`, EXIT.NOHOST);
   }
 
   if (flags.json) {
@@ -162,7 +165,7 @@ async function handleMultiRecordDns(domain: string, txtRecords: string[], flags:
 
 export async function cmdResolve(positional: string[], flags: Record<string, unknown>): Promise<void> {
   if (positional.length === 0) {
-    fatal('Usage: agentroot resolve <domain> [/<record-id>]');
+    fatal('Usage: agentroot resolve <domain> [/<record-id>]', EXIT.USAGE);
   }
 
   const input = positional[0] as string;
@@ -178,7 +181,8 @@ export async function cmdResolve(positional: string[], flags: Record<string, unk
 
   if (!result.found) {
     spinner.error({ text: result.error });
-    fatal(result.error, 'Try: agentroot search ' + domain.split('.')[0]);
+    // DNS lookup found nothing — sysexits 68 (NOHOST) signals "host unknown".
+    fatal(result.error, 'Try: agentroot search ' + domain.split('.')[0], EXIT.NOHOST);
   }
 
   if (result.mode === 'manifest') {
