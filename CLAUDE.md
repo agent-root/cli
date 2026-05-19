@@ -1,6 +1,6 @@
 # agent-root CLI: Project Conventions
 
-The CLI client for the AgentRoot protocol. Standalone, MIT-licensed, npm-published.
+The CLI client for the AgentRoot protocol. Standalone, MIT-licensed. **No publish pipeline yet** — release strategy (registry, signing, provenance, cadence) is still being decided; do not add a release workflow, a `prepublishOnly` hook, or any other publish-adjacent automation without explicit sign-off.
 
 ## Project layout
 

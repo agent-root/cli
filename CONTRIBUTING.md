@@ -155,13 +155,9 @@ Look at `tests/lib/format.test.ts` and `tests/commands/install-helpers.test.ts` 
 
 ## Releasing
 
-Maintainer-only:
+There is **no automated release pipeline** at the moment. The repo intentionally ships no publish workflow until the release strategy (registry, signing, provenance, cadence) is decided. Maintainers cut releases manually when ready.
 
-1. Land all PRs in the release.
-2. Update `## [Unreleased]` in `CHANGELOG.md` to the new version + date.
-3. Bump `package.json` version.
-4. Tag the release: `git tag v0.3.0 -s -m "v0.3.0"` then `git push --tags`.
-5. The `release.yml` workflow publishes to npm with provenance.
+When the release process is settled, this section will document it.
 
 ## Getting help
 
