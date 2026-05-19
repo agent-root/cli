@@ -13,6 +13,7 @@ import { cmdHealth } from './commands/health';
 import { cmdManifests } from './commands/manifests';
 import { cmdCollections } from './commands/collections';
 import { cmdSubmit } from './commands/submit';
+import { cmdVersion, printShortVersion } from './commands/version';
 import { parseArgs } from './cli/parse-args';
 import { fatal } from './cli/fatal';
 import { DOCS_URL } from './constants/protocol';
@@ -93,6 +94,12 @@ export async function main(): Promise<void> {
   const isTTY = !!process.stdout.isTTY;
   const { cmd, positional, flags } = parseArgs(process.argv);
 
+  // `--version` / `-v` short-circuit, no DB/network side effects.
+  if (flags.version && cmd === undefined) {
+    printShortVersion();
+    return;
+  }
+
   if (flags.help || cmd === 'help') {
     showHelp();
     return;
@@ -154,6 +161,9 @@ export async function main(): Promise<void> {
         break;
       case 'submit':
         await cmdSubmit(positional, flags);
+        break;
+      case 'version':
+        cmdVersion(positional, flags);
         break;
       default:
         fatal(`Unknown command: ${cmd}. Run "agentroot help" for usage.`);
