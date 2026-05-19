@@ -40,7 +40,16 @@ async function maybeAutoInstallSkill(
   };
 
   try {
-    await installSkill(domain, skillId, recordForInstall, null, false, !!flags['project'], { ...flags, _quiet: true }, jsonOut);
+    await installSkill({
+      domain,
+      recordId: skillId,
+      record: recordForInstall,
+      manifest: null,
+      installAll: false,
+      isProject: !!flags['project'],
+      flags: { ...flags, _quiet: true },
+      jsonOut,
+    });
   } catch (err) {
     installSpinner.error({ text: 'Install failed: ' + (err as Error).message });
     return;

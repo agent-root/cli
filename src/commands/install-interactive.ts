@@ -63,7 +63,16 @@ export async function promptInstallFromResult(result: SearchResult, flags: Recor
     if (tools.length === 0) return;
     console.log();
     const instSpinner = maybeSpinner(`Fetching ${result.name || recordId} from ${domain}...`, flags).start();
-    await installSkill(domain, recordId, result as unknown as Record<string, unknown>, null, false, !!flags['project'], { ...flags, _selectedTools: tools, _quiet: true }, jsonOut);
+    await installSkill({
+      domain,
+      recordId,
+      record: result as unknown as Record<string, unknown>,
+      manifest: null,
+      installAll: false,
+      isProject: !!flags['project'],
+      flags: { ...flags, _selectedTools: tools, _quiet: true },
+      jsonOut,
+    });
     instSpinner.success({ text: `Installed ${pc.bold(result.name || recordId)} successfully` });
   } else if (result.type === 'mcp') {
     const tools = await promptToolSelect(flags);

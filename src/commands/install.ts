@@ -25,7 +25,13 @@ export interface JsonOut {
   [key: string]: unknown;
 }
 
-export function installMcp(domain: string, recordId: string | null, record: Record<string, unknown>, flags: Record<string, unknown>, jsonOut: JsonOut): void {
+export function installMcp(
+  domain: string,
+  recordId: string | null,
+  record: Record<string, unknown>,
+  flags: Record<string, unknown>,
+  jsonOut: JsonOut,
+): void {
   const transport = (record['transport'] as string) || 'sse';
   const endpoint = record['endpoint'] as string | undefined;
   const mcpName = `${domain}/${recordId}`;
@@ -41,11 +47,19 @@ export function installMcp(domain: string, recordId: string | null, record: Reco
   }
 
   jsonOut.type = 'mcp';
-  jsonOut.installed.push({ tool: 'config-display', name: record['name'] || recordId, config: configObject, transport, endpoint, auth: record['auth'] || 'none' });
+  jsonOut.installed.push({
+    tool: 'config-display',
+    name: record['name'] || recordId,
+    config: configObject,
+    transport,
+    endpoint,
+    auth: record['auth'] || 'none',
+  });
 
   if (flags && flags['json']) return;
 
-  console.log(`${pc.green('found')} MCP server: ${pc.bold((record['name'] || recordId) as string)}\n`);
+  const displayName = pc.bold((record['name'] || recordId) as string);
+  console.log(`${pc.green('found')} MCP server: ${displayName}\n`);
   if (record['description']) console.log(`  ${record['description'] as string}\n`);
 
   if (Array.isArray(record['tools']) && record['tools'].length > 0) {
@@ -64,27 +78,45 @@ export function installMcp(domain: string, recordId: string | null, record: Reco
   console.log(`\n${pc.dim('For Claude Code:  Add to .claude/settings.json under "mcpServers"')}`);
   console.log(`${pc.dim('For Cursor:       Add to .cursor/mcp.json under "mcpServers"')}`);
   if (record['auth'] && record['auth'] !== 'none') {
-    console.log(`\n${pc.yellow('note')} This MCP server requires auth: ${pc.bold(record['auth'] as string)}`);
+    const authLabel = pc.bold(record['auth'] as string);
+    console.log(`\n${pc.yellow('note')} This MCP server requires auth: ${authLabel}`);
     if (record['docs']) console.log(`  See: ${record['docs'] as string}`);
   }
 }
 
-export function installAgent(domain: string, recordId: string | null, record: Record<string, unknown>, flags: Record<string, unknown>, jsonOut: JsonOut): void {
+export function installAgent(
+  domain: string,
+  recordId: string | null,
+  record: Record<string, unknown>,
+  flags: Record<string, unknown>,
+  jsonOut: JsonOut,
+): void {
   const typeLabel = RECORD_TYPES[record['type'] as string] || record['type'] as string;
   jsonOut.type = record['type'] as string;
-  jsonOut.installed.push({ name: record['name'] || recordId, endpoint: record['endpoint'], protocol: record['protocol'] || 'a2a', capabilities: record['capabilities'] || [], auth: record['auth'] || 'none' });
+  jsonOut.installed.push({
+    name: record['name'] || recordId,
+    endpoint: record['endpoint'],
+    protocol: record['protocol'] || 'a2a',
+    capabilities: record['capabilities'] || [],
+    auth: record['auth'] || 'none',
+  });
 
   if (flags && flags['json']) return;
 
-  console.log(`${pc.green('found')} ${typeLabel}: ${pc.bold((record['name'] || recordId) as string)}\n`);
+  const displayName = pc.bold((record['name'] || recordId) as string);
+  console.log(`${pc.green('found')} ${typeLabel}: ${displayName}\n`);
   if (record['description']) console.log(`  ${record['description'] as string}\n`);
   if (record['endpoint']) console.log(`  ${pc.dim('endpoint:')} ${record['endpoint'] as string}`);
   if (record['protocol']) console.log(`  ${pc.dim('protocol:')} ${record['protocol'] as string}`);
-  if (record['capabilities']) console.log(`  ${pc.dim('capabilities:')} ${(record['capabilities'] as string[]).join(', ')}`);
+  if (record['capabilities']) {
+    const caps = (record['capabilities'] as string[]).join(', ');
+    console.log(`  ${pc.dim('capabilities:')} ${caps}`);
+  }
   if (record['auth']) console.log(`  ${pc.dim('auth:')} ${record['auth'] as string}`);
   if (record['docs']) console.log(`  ${pc.dim('docs:')} ${record['docs'] as string}`);
   console.log();
-  console.log(`${pc.dim(`Agents are accessed via their endpoint. Use the protocol (${record['protocol'] || 'a2a'}) to connect.`)}`);
+  const protoLabel = record['protocol'] || 'a2a';
+  console.log(pc.dim(`Agents are accessed via their endpoint. Use the protocol (${protoLabel}) to connect.`));
 }
 
 export async function cmdInstall(positional: string[], flags: Record<string, unknown>): Promise<void> {
@@ -102,7 +134,10 @@ export async function cmdInstall(positional: string[], flags: Record<string, unk
 
   const slashIdx = input.indexOf('/');
   if (slashIdx === -1 && !installAll) {
-    fatal('Expected format: <domain>/<record-id> or <domain> --all', 'Example: agentroot install stripe.com/payments --tool claude');
+    fatal(
+      'Expected format: <domain>/<record-id> or <domain> --all',
+      'Example: agentroot install stripe.com/payments --tool claude',
+    );
   }
 
   const domain = installAll ? input : input.slice(0, slashIdx);
@@ -113,7 +148,10 @@ export async function cmdInstall(positional: string[], flags: Record<string, unk
 
   // Path traversal protection — reject record IDs that could write outside skill directory
   if (recordId && (recordId.includes('..') || recordId.includes('/') || recordId.includes('\\'))) {
-    fatal('Invalid record ID — must not contain path separators', 'Record IDs are simple identifiers like "payments" or "db-tools"');
+    fatal(
+      'Invalid record ID — must not contain path separators',
+      'Record IDs are simple identifiers like "payments" or "db-tools"',
+    );
   }
 
   let record: Record<string, unknown> | null = null;
@@ -134,21 +172,32 @@ export async function cmdInstall(positional: string[], flags: Record<string, unk
     } else if (result.found && result.mode === 'inline') {
       record = result.fields as unknown as Record<string, unknown>;
     }
-  } catch {}
+  } catch {
+    // DNS resolution is best-effort — domain might have no _agentroot
+    // TXT record, DNS might be flaky, or the manifest URL might 404.
+    // Swallowing so we proceed to the registry fallback below.
+  }
 
   // Fallback to registry if DNS didn't find anything
   if (!record && !manifest) {
     try {
       spinner.update({ text: 'Fetching manifest from registry...' });
-      const manifestData = await fetchJSON<{ manifest?: Record<string, unknown> }>(`${getApiBase()}/api/manifests/${encodeURIComponent(domain)}`);
+      const manifestUrl = `${getApiBase()}/api/manifests/${encodeURIComponent(domain)}`;
+      const manifestData = await fetchJSON<{ manifest?: Record<string, unknown> }>(manifestUrl);
       const z = manifestData.manifest || manifestData as Record<string, unknown>;
-      if ((z as Record<string, unknown>)['records'] || (z as Record<string, unknown>)['raw_manifest']) {
-        manifest = ((z as Record<string, unknown>)['raw_manifest'] || z) as Record<string, unknown>;
+      const zRec = z as Record<string, unknown>;
+      if (zRec['records'] || zRec['raw_manifest']) {
+        manifest = (zRec['raw_manifest'] || zRec) as Record<string, unknown>;
         if (manifest['records'] && recordId) {
-          record = (manifest['records'] as Array<Record<string, unknown>>).find(r => r['id'] === recordId) || null;
+          const records = manifest['records'] as Array<Record<string, unknown>>;
+          record = records.find(r => r['id'] === recordId) || null;
         }
       }
-    } catch {}
+    } catch {
+      // Registry is an optional fallback — DNS resolution above is the
+      // primary path. If both DNS and the registry have nothing, the
+      // type check below will fatal with a clear message.
+    }
   }
 
   const recordType = record ? record['type'] as string : ((flags['type'] as string) || null);
@@ -169,7 +218,7 @@ export async function cmdInstall(positional: string[], flags: Record<string, unk
   }
 
   spinner.success({ text: 'Resolved ' + ((record ? (record['name'] || recordId) : domain) as string) });
-  await installSkill(domain, recordId, record, manifest, installAll, isProject, flags, jsonOut);
+  await installSkill({ domain, recordId, record, manifest, installAll, isProject, flags, jsonOut });
   if (flags['json']) { console.log(JSON.stringify(jsonOut, null, 2)); }
 }
 

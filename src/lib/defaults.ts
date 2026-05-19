@@ -67,7 +67,16 @@ export async function ensureDefaults(flags: Record<string, unknown>): Promise<vo
     const jsonOut: JsonOut = { status: 'success', domain: skill.domain, recordId: skill.id, type: 'skill', installed: [], skipped: [], errors: [] };
 
     try {
-      await installSkill(skill.domain, skill.id, record, null, false, false, { ...flags, _quiet: true }, jsonOut);
+      await installSkill({
+        domain: skill.domain,
+        recordId: skill.id,
+        record,
+        manifest: null,
+        installAll: false,
+        isProject: false,
+        flags: { ...flags, _quiet: true },
+        jsonOut,
+      });
       if (!quiet && jsonOut.errors.length === 0) {
         console.log(`  ${pc.green('✓')} ${skill.name}`);
       }
