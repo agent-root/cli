@@ -15,6 +15,7 @@ import { cmdCollections } from './commands/collections';
 import { cmdSubmit } from './commands/submit';
 import { parseArgs } from './cli/parse-args';
 import { fatal } from './cli/fatal';
+import { DOCS_URL } from './constants/protocol';
 
 export function showHelp(): void {
   console.log(`
@@ -84,7 +85,7 @@ ${pc.bold('EXAMPLES')}
 ${pc.bold('PROTOCOL')}
   AgentRoot resolves AI capabilities via DNS TXT records + JSON manifests.
   Any domain can declare agents, MCP servers, skills, and A2A endpoints.
-  See: https://agentroot.io/docs/protocol
+  See: ${DOCS_URL}
 `);
 }
 

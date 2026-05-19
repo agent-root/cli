@@ -1,5 +1,6 @@
 import dns from 'node:dns';
 import { parseTxtRecord } from '@agent-root/core';
+import { PROTOCOL_VERSION, txtHostFor } from '../../constants/protocol';
 
 export type ResolveResult =
   | { found: false; error: string; txtRecords?: string[] }
@@ -18,21 +19,21 @@ export function dnsLookupTxt(hostname: string): Promise<string[]> {
 }
 
 export async function resolveAgentroot(domain: string): Promise<ResolveResult> {
-  const hostname = `_agentroot.${domain}`;
+  const hostname = txtHostFor(domain);
   let txtRecords: string[];
   try {
     txtRecords = await dnsLookupTxt(hostname);
   } catch (err) {
     const e = err as NodeJS.ErrnoException;
     if (e.code === 'ENODATA' || e.code === 'ENOTFOUND' || e.code === 'SERVFAIL') {
-      return { found: false, error: `No _agentroot TXT record found at ${hostname}` };
+      return { found: false, error: `No ${hostname} TXT record found` };
     }
     throw err;
   }
 
-  const ar1 = txtRecords.find(r => r.startsWith('v=ar1'));
+  const ar1 = txtRecords.find(r => r.startsWith(PROTOCOL_VERSION));
   if (!ar1) {
-    return { found: false, error: `TXT records found at ${hostname} but none start with v=ar1`, txtRecords };
+    return { found: false, error: `TXT records found at ${hostname} but none start with ${PROTOCOL_VERSION}`, txtRecords };
   }
 
   const fields = parseTxtRecord(ar1);

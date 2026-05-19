@@ -6,6 +6,7 @@ import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
 import { formatRecord } from '../utils/format-record';
 import { installSkill } from '../services/install/install-skill';
+import { PROTOCOL_VERSION, txtHostFor } from '../constants/protocol';
 import type { JsonOut } from '../types/install';
 
 // --- Per-record helpers using the registry ---
@@ -98,7 +99,7 @@ async function handleManifestMode(domain: string, manifestUrl: string, recordId:
     return;
   }
 
-  console.log(`${pc.bold(manifest.domain as string)} — ${records.length} record(s)\n`);
+  console.log(`${pc.bold(manifest.domain as string)}: ${records.length} record(s)\n`);
 
   const filtered = recordId ? records.filter(r => r.id === recordId) : records;
   if (recordId && filtered.length === 0) {
@@ -122,7 +123,7 @@ async function handleMultiRecordDns(domain: string, txtRecords: string[], flags:
   const records = parseAllTxt(txtRecords, domain);
 
   if (records.length === 0) {
-    fatal(`No v=ar1 records found at _agentroot.${domain}`);
+    fatal(`No ${PROTOCOL_VERSION} records found at ${txtHostFor(domain)}`);
   }
 
   if (flags.json) {
@@ -130,7 +131,7 @@ async function handleMultiRecordDns(domain: string, txtRecords: string[], flags:
     return;
   }
 
-  console.log(`${pc.bold(`_agentroot.${domain}`)} — ${records.length} record(s)\n`);
+  console.log(`${pc.bold(txtHostFor(domain))}: ${records.length} record(s)\n`);
 
   for (const record of records) {
     console.log(`  ${pc.dim('TXT:')} ${record.raw ?? ''}`);
@@ -166,9 +167,9 @@ export async function cmdResolve(positional: string[], flags: Record<string, unk
   const domain = slashIdx === -1 ? input : input.slice(0, slashIdx);
   const recordId = slashIdx === -1 ? null : input.slice(slashIdx + 1);
 
-  const spinner = maybeSpinner('Resolving _agentroot.' + domain + '...', flags).start();
+  const spinner = maybeSpinner('Resolving ' + txtHostFor(domain) + '...', flags).start();
 
-  // First check manifest mode — if the domain points at a manifest URL, prefer that path
+  // First check manifest mode, if the domain points at a manifest URL, prefer that path
   // (manifests can hold many records of any type and have richer schemas).
   const result = await resolveAgentroot(domain);
 
@@ -184,12 +185,12 @@ export async function cmdResolve(positional: string[], flags: Record<string, unk
   }
 
   // For non-manifest modes (skill / inline / multiple), reuse the TXT records
-  // already fetched by resolveAgentroot — the previous code did a second
+  // already fetched by resolveAgentroot, the previous code did a second
   // identical DNS lookup here, which added one full round-trip to every
   // non-manifest resolve. parseAllTxt then fixes the multi-record bug where
   // domains publishing both a skill and a payment record (e.g. rides.com)
   // previously returned only the first.
   const txtRecords = result.txtRecords;
-  spinner.success({ text: `Found ${txtRecords.length} TXT record(s) at _agentroot.${domain}` });
+  spinner.success({ text: `Found ${txtRecords.length} TXT record(s) at ${txtHostFor(domain)}` });
   await handleMultiRecordDns(domain, txtRecords, flags);
 }

@@ -4,6 +4,7 @@ import { getApiBase } from '../services/config/config-service';
 import { resolveAgentroot } from '../services/dns/dns-service';
 import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
+import { txtHostFor } from '../constants/protocol';
 
 interface InstructionsBlock {
   agentroot?: {
@@ -42,7 +43,7 @@ function printInstructions(domain: string, instructions: InstructionsBlock | und
     console.log();
     console.log(`  ${pc.bold('Add this DNS TXT record, then re-submit:')}`);
     console.log();
-    console.log(`    ${pc.dim('host:')}  ${ar.record ?? `_agentroot.${domain}`}`);
+    console.log(`    ${pc.dim('host:')}  ${ar.record ?? txtHostFor(domain)}`);
     console.log(`    ${pc.dim('type:')}  ${ar.type ?? 'TXT'}`);
     console.log(`    ${pc.dim('value:')} ${ar.value}`);
     console.log();

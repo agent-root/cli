@@ -4,6 +4,7 @@ import pc from 'picocolors';
 import { MANIFEST_PATH } from '@agent-root/core';
 import { fatal } from '../cli/fatal';
 import { getApiBase } from '../services/config/config-service';
+import { buildTxtRecord, txtHostFor } from '../constants/protocol';
 
 // --- public entry point ---
 
@@ -25,7 +26,7 @@ export async function cmdInit(positional: string[], flags: Record<string, unknow
   console.log(`  1. Edit ${outputPath} with your records`);
   console.log(`  2. Run ${pc.cyan(`npx agent-root validate ${outputPath}`)}`);
   console.log(`  3. Add a DNS TXT record:`);
-  console.log(`     ${pc.dim(`_agentroot.${domain} TXT "v=ar1 manifest=https://${domain}/.well-known/agentroot.json"`)}`);
+  console.log(`     ${pc.dim(`${txtHostFor(domain)} TXT "${buildTxtRecord(domain)}"`)}`);
   console.log(`  4. Deploy and submit: ${pc.cyan(`curl -X POST ${getApiBase()}/api/submit -H "Content-Type: application/json" -d '{"domain":"${domain}"}'`)}`);
 }
 
