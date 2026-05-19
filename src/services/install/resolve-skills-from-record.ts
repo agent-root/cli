@@ -32,7 +32,7 @@ export async function resolveSkillsFromRecord(opts: ResolveSkillsFromRecordOptio
     }
   }
 
-  // Also check index.json if present — may have additional skills or be the only source
+  // Also check index.json if present, may have additional skills or be the only source
   if (record['index'] && skills.length === 0) {
     const indexSpinner = maybeSpinner('Fetching index ' + record['index'] + '...', flags).start();
     try {

@@ -41,7 +41,7 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
 
     console.log(`${pc.bold('Checking ' + allKeys.length + ' installed record(s)...')}\n`);
 
-    // Fetch every installed record's source in parallel — for N installed
+    // Fetch every installed record's source in parallel, for N installed
     // skills this turns N sequential round-trips into one round-trip total.
     // We still print per-record results in deterministic key order below.
     const outcomes = await Promise.all(allKeys.map(async (key): Promise<FetchOutcome> => {
@@ -73,7 +73,7 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
 
   const input = positional[0] as string;
   const slashIdx = input.indexOf('/');
-  if (slashIdx === -1) fatal('Expected format: <domain>/<record-id>', 'Example: agentroot update stripe.com/payments');
+  if (slashIdx === -1) fatal('Expected format: <domain>/<record-id>', 'Example: agentroot update doma.xyz/doma-protocol');
 
   const domain = input.slice(0, slashIdx);
   const recordId = input.slice(slashIdx + 1);
@@ -107,8 +107,8 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
 
   const newHash = hashContent(content);
   if (newHash === entry.version_hash) {
-    if (updateSpinner.info) updateSpinner.info({ text: 'Already up to date — no changes' });
-    else updateSpinner.success({ text: 'Already up to date — no changes' });
+    if (updateSpinner.info) updateSpinner.info({ text: 'Already up to date, no changes' });
+    else updateSpinner.success({ text: 'Already up to date, no changes' });
     if (flags['json']) {
       console.log(JSON.stringify({ status: 'no-changes', domain, record_id: recordId }));
     }
@@ -147,7 +147,7 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
  * Dispatch a single fetch outcome to the right side-effect: print + count.
  * Mutates `tally` in place to keep the call site readable as a one-liner.
  *
- * Behavior matches the original three-branch if-chain — pulled out so the
+ * Behavior matches the original three-branch if-chain, pulled out so the
  * orchestration loop in `cmdUpdate` doesn't have to interleave high-level
  * "compute hash, write, log" prose with low-level branching.
  */
@@ -159,12 +159,12 @@ function handleOutcome(
   if (outcome.kind === 'skip') {
     const entry = installed[outcome.key];
     if (entry && !entry.source_url) {
-      console.log(`  ${pc.yellow('skip')} ${outcome.key} — no source_url`);
+      console.log(`  ${pc.yellow('skip')} ${outcome.key}, no source_url`);
     }
     return;
   }
   if (outcome.kind === 'fail') {
-    console.log(`  ${pc.red('fail')} ${outcome.key} — ${outcome.message}`);
+    console.log(`  ${pc.red('fail')} ${outcome.key}, ${outcome.message}`);
     tally.failed++;
     return;
   }
@@ -172,7 +172,7 @@ function handleOutcome(
   const { key, entry, content } = outcome;
   const newHash = hashContent(content);
   if (newHash === entry.version_hash) {
-    console.log(`  ${pc.green('✓')} ${key} — up to date`);
+    console.log(`  ${pc.green('✓')} ${key}, up to date`);
     tally.upToDate++;
     return;
   }
@@ -187,7 +187,7 @@ function handleOutcome(
     version_hash: newHash,
     tools: entry.tools,
   });
-  console.log(`  ${pc.green('↑')} ${key} — ${pc.bold('updated')} (${newHash.slice(0, 8)})`);
+  console.log(`  ${pc.green('↑')} ${key}, ${pc.bold('updated')} (${newHash.slice(0, 8)})`);
   tally.updated++;
 }
 

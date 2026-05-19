@@ -16,7 +16,7 @@ export function createSymlink(targetDir: string, linkPath: string): string {
       fs.rmSync(linkPath, { recursive: true });
     }
   } catch {
-    // No existing entry to clean up — lstat throws ENOENT on a fresh
+    // No existing entry to clean up, lstat throws ENOENT on a fresh
     // install. That's the happy path here.
   }
 

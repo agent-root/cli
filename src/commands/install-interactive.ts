@@ -67,7 +67,7 @@ export async function promptInstallFromResult(result: SearchResult, flags: Recor
   }
 }
 
-// --- private: phase 1 — install actions ---
+// --- private: phase 1, install actions ---
 
 interface InstallActionContext {
   result: SearchResult;
@@ -137,7 +137,7 @@ const INSTALL_ACTIONS: Record<string, InstallAction> = {
   payment: installAgentLike,
 };
 
-// --- private: phase 2 — summary printers ---
+// --- private: phase 2, summary printers ---
 
 function printSummary(result: SearchResult, domain: string, recordId: string, jsonOut: JsonOut): void {
   const installedCount = jsonOut.installed.length;
@@ -227,7 +227,7 @@ function writeMcpConfig(configPath: string, domain: string, recordId: string, re
     existing = JSON.parse(fs.readFileSync(configPath, 'utf8')) as Record<string, unknown>;
   } catch {
     // File may not exist, may be unreadable, or may contain malformed JSON.
-    // Any of those collapse to "start with an empty object" — we own the
+    // Any of those collapse to "start with an empty object", we own the
     // file going forward, so a partial overwrite is preferable to failing.
   }
   if (!existing['mcpServers']) existing['mcpServers'] = {};

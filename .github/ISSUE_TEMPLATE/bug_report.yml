@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for filing a bug. Please be specific — the more we know, the faster we can fix it.
+        Thanks for filing a bug. Please be specific. The more we know, the faster we can fix it.
   - type: textarea
     id: summary
     attributes:
@@ -20,7 +20,7 @@ body:
     attributes:
       label: CLI version
       description: Output of `agent-root --version` or the version field in package.json.
-      placeholder: "0.2.0"
+      placeholder: "e.g. 0.X.Y"
     validations:
       required: true
   - type: textarea

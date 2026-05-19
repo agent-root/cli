@@ -28,7 +28,7 @@ export async function cmdUninstall(positional: string[], flags: Record<string, u
       if (!entry) continue;
       const toolCount = Object.keys(entry.tools).length;
       const typeLabel = labelForType(entry.type);
-      console.log(`  ${pc.dim((i + 1) + '.')} ${pc.bold(entry.record_id)} ${pc.dim(`[${typeLabel}]`)} ${pc.dim(`(${entry.domain})`)} — ${toolCount} tool${toolCount !== 1 ? 's' : ''}`);
+      console.log(`  ${pc.dim((i + 1) + '.')} ${pc.bold(entry.record_id)} ${pc.dim(`[${typeLabel}]`)} ${pc.dim(`(${entry.domain})`)} ${pc.dim(`(${toolCount} tool${toolCount !== 1 ? 's' : ''})`)}`);
     }
     console.log();
 
@@ -43,7 +43,7 @@ export async function cmdUninstall(positional: string[], flags: Record<string, u
         choices: allKeys.map(k => {
           const e = state.installed[k as string];
           const toolCount = Object.keys(e?.tools ?? {}).length;
-          return { name: `${e?.record_id ?? k} (${e?.domain ?? 'unknown'}) — ${toolCount} tool${toolCount !== 1 ? 's' : ''}`, value: k as string };
+          return { name: `${e?.record_id ?? k} (${e?.domain ?? 'unknown'}) (${toolCount} tool${toolCount !== 1 ? 's' : ''})`, value: k as string };
         }),
       });
     } catch {

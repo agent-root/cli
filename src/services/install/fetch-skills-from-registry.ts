@@ -54,7 +54,7 @@ export async function fetchSkillsFromRegistry(opts: FetchSkillsFromRegistryOptio
     }
   } catch {
     // Registry might be down, network might be flaky, or the domain
-    // might genuinely have no skills — all three are "return empty"
+    // might genuinely have no skills, all three are "return empty"
     // outcomes. The caller decides whether empty means failure.
   }
   return skills;

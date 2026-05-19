@@ -1,7 +1,7 @@
 /**
  * Field-name normalization helpers used by skill resolution.
  * Different sources (registry, manifest, index.json) use different field names
- * for the same logical concept — these helpers paper over those differences.
+ * for the same logical concept, these helpers paper over those differences.
  */
 
 /**
@@ -15,7 +15,7 @@ export function extractSkillUrl(entry: Record<string, unknown>): string | undefi
 /**
  * Extract a skill ID from a record or index entry.
  * Handles: skill_id, slug, id. Prefers string fields over numeric DB IDs.
- * Always returns a string — coerces numbers to strings.
+ * Always returns a string, coerces numbers to strings.
  */
 export function extractSkillId(entry: Record<string, unknown>, fallback: string): string {
   const raw = entry['skill_id'] || entry['slug'] || entry['id'] || fallback;

@@ -6,7 +6,7 @@ import { labelForType } from '../constants/record-types';
 export async function cmdList(_positional: string[], flags: Record<string, unknown>): Promise<void> {
   // readInstalledState reads the canonical ~/.agentroot/installed.json and
   // transparently migrates from the legacy ~/.agents/.agentroot-manifest.json
-  // on first call. Single source of truth — matches install/uninstall/update.
+  // on first call. Single source of truth, matches install/uninstall/update.
   const state = readInstalledState();
   const entries = state.installed;
   const keys = Object.keys(entries);

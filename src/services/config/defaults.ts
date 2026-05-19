@@ -21,7 +21,7 @@ interface DefaultSkill {
 /**
  * Skills that ship with AgentRoot and are auto-installed on first use.
  * These are universal skills that every user benefits from.
- * The URLs are stable — the skill content is maintained by the publishers.
+ * The URLs are stable, the skill content is maintained by the publishers.
  */
 const DEFAULT_SKILLS: readonly DefaultSkill[] = [
   {
@@ -59,7 +59,7 @@ export async function ensureDefaults(flags: Record<string, unknown>): Promise<vo
   }
 
   if (!quiet) {
-    console.log(`${pc.dim('First run — installing default skills...')}`);
+    console.log(`${pc.dim('First run, installing default skills...')}`);
   }
 
   for (const skill of missing) {
@@ -81,7 +81,7 @@ export async function ensureDefaults(flags: Record<string, unknown>): Promise<vo
         console.log(`  ${pc.green('✓')} ${skill.name}`);
       }
     } catch {
-      // Non-fatal — don't block the user's command
+      // Non-fatal, don't block the user's command
     }
   }
 

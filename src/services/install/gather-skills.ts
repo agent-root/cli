@@ -3,7 +3,7 @@ import { fetchSkillsFromRegistry } from './fetch-skills-from-registry';
 import type { SkillMeta, InstallSkillOptions } from '../../types/install';
 
 /**
- * Phase 2+3 of installSkill — gather the list of skills to install.
+ * Phase 2+3 of installSkill, gather the list of skills to install.
  * Tries record/manifest first, falls back to the registry API.
  */
 export async function gatherSkillsToInstall(opts: InstallSkillOptions): Promise<SkillMeta[]> {

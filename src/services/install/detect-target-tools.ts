@@ -2,7 +2,7 @@ import pc from 'picocolors';
 import { detectTools } from '@agent-root/core';
 
 /**
- * Phase 1 of installSkill — decide which AI tools to install for.
+ * Phase 1 of installSkill, decide which AI tools to install for.
  * Honors --tool flag, then _selectedTools (from interactive picker),
  * else falls back to detecting installed tools, else cross-tool default.
  * Exported for unit testing.

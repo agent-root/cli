@@ -14,7 +14,7 @@ Open a [bug report](https://github.com/d3-inc/agentroot/issues/new?template=bug_
 
 ## I want a new feature or improvement
 
-Open a [feature request](https://github.com/d3-inc/agentroot/issues/new?template=feature_request.yml). Describe the use case before the implementation — what are you trying to do?
+Open a [feature request](https://github.com/d3-inc/agentroot/issues/new?template=feature_request.yml). Describe the use case before the implementation. What are you trying to do?
 
 ## I have a question about how to use the CLI
 

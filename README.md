@@ -370,21 +370,7 @@ Quick reads against the registry that mirror what the web UI shows.
 agent-root stats
 ```
 
-```text
-  Agents
-    total:   1
-    active:  1
-    pending: 0
-    failed:  0
-
-  Skills
-    total:   1338
-    active:  1338
-    items:   1341
-
-  By TLD
-    .ai: 1
-```
+![](docs/screenshots/stats.png)
 
 `--json` returns the same payload the UI's overview cards consume.
 
@@ -394,7 +380,9 @@ agent-root stats
 agent-root health
 ```
 
-Prints `status: ok` and `db: connected` when the registry is reachable. Exits non-zero otherwise, so you can use it as a CI gate:
+![](docs/screenshots/health.png)
+
+Exits non-zero if the registry is not reachable, so you can use it as a CI gate:
 
 ```bash
 agent-root health && deploy
@@ -409,6 +397,8 @@ agent-root manifests --query doma
 agent-root manifests --page 2 --limit 50
 agent-root manifests --all --type mcp
 ```
+
+![](docs/screenshots/manifests.png)
 
 Each row shows the domain, current verification status, the manifest URL, a breakdown of records by type, and the last verified date:
 
@@ -430,6 +420,8 @@ The registry publishes editorial collections (e.g. `featured-domains`). List the
 agent-root collections
 agent-root collections featured-domains
 ```
+
+![](docs/screenshots/collections.png)
 
 Both forms accept `--json` for scripting.
 

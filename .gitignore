@@ -12,6 +12,9 @@ dist/
 # Local planning + audit (not for the public repo)
 .planning/
 .audit/
+*-AUDIT.md
+AUDIT-*.md
+NOTES.md
 
 # Editor
 .vscode/
@@ -24,9 +27,21 @@ dist/
 .env.local
 .env.*.local
 
-# Test artifacts (no tests yet, but reserve for future)
+# Test artifacts
 coverage/
 .nyc_output/
+.vitest-cache/
+
+# Playwright (used by scripts/capture-screenshots.mjs)
+playwright-report/
+test-results/
+
+# Misc
+*.log
+.cache/
+.turbo/
+tmp/
+.tmp/
 
 # Local-only vendored tarball — workaround for stale @agent-root/core@0.2.0
 # on npm. To be removed once a newer core (with manifest/install-state/records

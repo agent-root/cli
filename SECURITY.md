@@ -6,7 +6,7 @@
 
 Use one of these private channels:
 
-1. **GitHub Private Vulnerability Reporting**: enabled on this repo (once it's public). Preferred — keeps the report attached to the repo and creates an audit trail.
+1. **GitHub Private Vulnerability Reporting**: enabled on this repo (once it's public). Preferred path. Keeps the report attached to the repo and creates an audit trail.
 2. **Email**: send to **mayank@d3.com** with a clear subject line and steps to reproduce.
 
 We acknowledge reports within **3 business days** and aim to resolve confirmed issues within **90 days** of acknowledgment. The disclosure timeline is coordinated with the reporter; we publish an advisory and CVE (where applicable) at the same time as the fix.
@@ -25,7 +25,7 @@ We publish security fixes for the latest minor release.
 In scope:
 
 - The `agent-root` CLI source in this repository.
-- The `@agent-root/core` dependency consumed from npm — for `@agent-root/core` bugs, file at https://github.com/d3-inc/agentroot/security (the source repo for that package).
+- The `@agent-root/core` dependency consumed from npm. For `@agent-root/core` bugs, file at https://github.com/d3-inc/agentroot/security (the source repo for that package).
 
 Out of scope:
 

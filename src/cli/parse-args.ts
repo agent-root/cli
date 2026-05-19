@@ -5,7 +5,7 @@ export interface ParsedArgs {
 }
 
 /**
- * Flags that never take a value — they're always booleans, even when followed
+ * Flags that never take a value, they're always booleans, even when followed
  * by another positional argument. Pulled out of the parsing loop so adding a
  * new boolean flag is a one-line edit and not a buried `||` in a condition.
  */

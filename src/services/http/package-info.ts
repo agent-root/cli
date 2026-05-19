@@ -1,6 +1,6 @@
 /**
  * Reads name + version from this CLI package's package.json at runtime so the
- * outbound User-Agent header reflects the actual published version — no manual
+ * outbound User-Agent header reflects the actual published version, no manual
  * sync needed on every release.
  *
  * Walks up from __dirname to find the nearest package.json. This works both

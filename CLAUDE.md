@@ -95,6 +95,35 @@ Smoke test recipe lives in `TESTING.md`.
 - `.planning/CODE-QUALITY-AUDIT.md` (local-only): readability audit referencing Google TS Style Guide, Clean Code TypeScript, refactoring.guru. Documents 25 findings and which were applied vs. deferred.
 - `.planning/audit-trail.md` (local-only): per-task log of the original extraction work.
 
+## Keeping docs in sync with code
+
+**Whenever you change CLI surface, you must update docs in the same commit.** Surface = anything a user sees or scripts against:
+
+- A new command, flag, alias, or environment variable → add it to:
+  - `README.md` (Commands table, Help section verbatim text, Usage subsection if it deserves one)
+  - `src/index.ts` `showHelp()` (the help text users see)
+  - `CLAUDE.md` Project layout if it's a new file
+  - `TESTING.md` smoke recipe
+- A change to command output (column count, JSON envelope, error messages) → regenerate the relevant screenshot:
+  ```bash
+  pnpm run screenshots
+  ```
+  The recipe is in `scripts/capture-screenshots.mjs`. Each PNG is committed to `docs/screenshots/`.
+- A change to default behavior (e.g. switching the search backend) → call it out in `## [Unreleased]` of `CHANGELOG.md`.
+- A change to required Node version, supported tools, or platforms → update README's Install section and `package.json` engines.
+
+**Rule of thumb:** if a user could be surprised by your change without reading the diff, the README must reflect it.
+
+## Single source of truth
+
+- **Version**: `package.json` `version`. Read at runtime via `src/services/http/package-info.ts`. Never hardcode a version anywhere else.
+- **API base URL**: `@agent-root/core`'s `API_BASE` constant. User override via `~/.agentroot/config.json api-url` or `AGENTROOT_API_BASE` env var. Never hardcode `agentroot.io` in CLI source.
+- **Record types**: `src/constants/record-types.ts`. Use `RECORD_TYPES` and `labelForType` everywhere; do not repeat the string literals.
+- **Tool names**: `claude`, `cursor`, `codex`, `gemini`, `agents`. These come from `@agent-root/core` `detectTools()`. Do not redefine the set in the CLI.
+- **Skill dir paths**: `@agent-root/core` `resolveToolDir()`. Do not hand-write `~/.claude/skills/` etc.
+
+If you add a new repeated string (`x` appears in 3+ files), extract it to `src/constants/`.
+
 ## Notes for AI assistants
 
 When making changes:

@@ -45,7 +45,7 @@ export function installMcp(
   if (Array.isArray(record['tools']) && record['tools'].length > 0) {
     console.log(`  ${pc.dim('Tools:')}`);
     for (const t of record['tools'] as Array<{ name: string; description?: string }>) {
-      console.log(`    ${pc.cyan(t.name)}${t.description ? ` — ${pc.dim(t.description)}` : ''}`);
+      console.log(`    ${pc.cyan(t.name)}${t.description ? `: ${pc.dim(t.description)}` : ''}`);
     }
     console.log();
   }
@@ -119,20 +119,20 @@ export async function cmdInstall(positional: string[], flags: Record<string, unk
   if (slashIdx === -1 && !installAll) {
     fatal(
       'Expected format: <domain>/<record-id> or <domain> --all',
-      'Example: agentroot install stripe.com/payments --tool claude',
+      'Example: agentroot install doma.xyz/doma-protocol --tool claude',
     );
   }
 
   const domain = installAll ? input : input.slice(0, slashIdx);
   const recordId = installAll ? null : input.slice(slashIdx + 1);
 
-  if (!domain) fatal('Missing domain', 'Example: agentroot install stripe.com/payments');
-  if (!installAll && !recordId) fatal('Missing record ID', 'Example: agentroot install stripe.com/payments');
+  if (!domain) fatal('Missing domain', 'Example: agentroot install doma.xyz/doma-protocol');
+  if (!installAll && !recordId) fatal('Missing record ID', 'Example: agentroot install doma.xyz/doma-protocol');
 
-  // Path traversal protection — reject record IDs that could write outside skill directory
+  // Path traversal protection: reject record IDs that could write outside skill directory
   if (recordId && (recordId.includes('..') || recordId.includes('/') || recordId.includes('\\'))) {
     fatal(
-      'Invalid record ID — must not contain path separators',
+      'Invalid record ID. Must not contain path separators.',
       'Record IDs are simple identifiers like "payments" or "db-tools"',
     );
   }
@@ -141,7 +141,7 @@ export async function cmdInstall(positional: string[], flags: Record<string, unk
   let manifest: Record<string, unknown> | null = null;
   const spinner = maybeSpinner('Resolving ' + domain + '...', flags).start();
 
-  // Always try DNS resolution first — both for single install and --all
+  // Always try DNS resolution first, both for single install and --all
   try {
     const result = await resolveAgentroot(domain);
     if (result.found && result.mode === 'manifest') {
@@ -156,7 +156,7 @@ export async function cmdInstall(positional: string[], flags: Record<string, unk
       record = result.fields as unknown as Record<string, unknown>;
     }
   } catch {
-    // DNS resolution is best-effort — domain might have no _agentroot
+    // DNS resolution is best-effort, domain might have no _agentroot
     // TXT record, DNS might be flaky, or the manifest URL might 404.
     // Swallowing so we proceed to the registry fallback below.
   }
@@ -179,7 +179,7 @@ export async function cmdInstall(positional: string[], flags: Record<string, unk
         }
       }
     } catch {
-      // Registry is an optional fallback — DNS resolution above is the
+      // Registry is an optional fallback, DNS resolution above is the
       // primary path. If both DNS and the registry have nothing, the
       // type check below will fatal with a clear message.
     }
@@ -189,11 +189,11 @@ export async function cmdInstall(positional: string[], flags: Record<string, unk
     (record?.['type'] as string | undefined) ?? (flags['type'] as string | undefined) ?? null;
   const jsonOut: JsonOut = { status: 'success', domain, recordId, type: null, installed: [], skipped: [], errors: [] };
 
-  // Shared `Resolved <X>` label — same source-of-truth for every branch.
+  // Shared `Resolved <X>` label, same source-of-truth for every branch.
   const resolvedLabel = (record ? (record['name'] || recordId) : domain) as string;
   spinner.success({ text: 'Resolved ' + resolvedLabel });
 
-  // Dispatch on record type. Skill is the implicit default — anything that
+  // Dispatch on record type. Skill is the implicit default, anything that
   // isn't explicitly mcp/agent/a2a falls through to `installSkill`.
   const handler = TYPE_HANDLERS[recordType ?? ''] ?? defaultSkillHandler;
   await handler({ domain, recordId, record, manifest, installAll, isProject, flags, jsonOut });
@@ -241,7 +241,7 @@ const defaultSkillHandler: TypeHandler = async ({
  *   - stdio + `install` block → `{ command, args }`
  *   - any other transport with an `endpoint` → `{ url }`
  *
- * Returns `null` if neither shape can be produced — callers display nothing
+ * Returns `null` if neither shape can be produced, callers display nothing
  * in that case, matching prior behavior.
  */
 function buildMcpConfigObject(

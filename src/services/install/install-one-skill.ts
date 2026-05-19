@@ -7,7 +7,7 @@ import { updateGlobalManifest } from './update-global-manifest';
 import type { SkillMeta, JsonOut } from '../../types/install';
 
 /**
- * Phase 4 of installSkill — install a single skill.
+ * Phase 4 of installSkill, install a single skill.
  * Fetches SKILL.md + supporting files, writes to canonical store, links per tool.
  * Returns the number of (tool, skill) pairs successfully installed.
  */
@@ -20,7 +20,7 @@ export async function installOneSkill(
   jsonOut: JsonOut,
 ): Promise<number> {
   if (!skill.url) {
-    if (!flags['json']) console.log(`${pc.yellow('skip')} ${skill.id} — no SKILL.md URL`);
+    if (!flags['json']) console.log(`${pc.yellow('skip')} ${skill.id}, no SKILL.md URL`);
     jsonOut.skipped.push({ id: skill.id, reason: 'no SKILL.md URL' });
     return 0;
   }
@@ -30,14 +30,14 @@ export async function installOneSkill(
     content = await fetch(skill.url);
   } catch (err) {
     if (!flags['json']) {
-      console.log(`${pc.red('fail')} ${skill.id} — could not fetch SKILL.md: ${(err as Error).message}`);
+      console.log(`${pc.red('fail')} ${skill.id}, could not fetch SKILL.md: ${(err as Error).message}`);
     }
     jsonOut.errors.push({ id: skill.id, error: (err as Error).message });
     return 0;
   }
 
   // Fetch supporting files referenced via relative links in SKILL.md.
-  // Done in parallel — these are independent network calls against the same
+  // Done in parallel, these are independent network calls against the same
   // origin and waiting for them serially can multiply install latency by 10x
   // on skills with many supporting docs.
   const supportingPaths = parseSupportingFiles(content);
