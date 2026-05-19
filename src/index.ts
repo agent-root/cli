@@ -5,6 +5,7 @@
 import './cli/env-preamble';
 import { colors, configureColors } from './cli/colors';
 import { configureQuiet } from './cli/streams';
+import { configureJsonMode } from './cli/fatal';
 import { EXIT } from './cli/exit-codes';
 import { cmdResolve } from './commands/resolve';
 import { cmdInstall } from './commands/install';
@@ -128,11 +129,13 @@ export async function main(): Promise<void> {
   // in unset keys, matching 12-Factor #6 ("Config in env").
   applyEnvDefaults(flags);
 
-  // Wire color and quiet state from flags + env *before* anything writes output.
-  // Done in this exact order so showHelp(), the version printer, and every
-  // command see consistent behavior.
+  // Wire color, quiet, and JSON-mode state from flags + env *before* anything
+  // writes output. Done in this exact order so showHelp(), the version printer,
+  // and every command see consistent behavior. configureJsonMode lets fatal()
+  // emit a JSON error envelope on stdout when --json is set.
   configureColors(flags);
   configureQuiet(flags);
+  configureJsonMode(flags);
 
   // `--version` / `-v` short-circuit, no DB/network side effects.
   if (flags.version && cmd === undefined) {
