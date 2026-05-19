@@ -1,0 +1,6 @@
+# CODEOWNERS — initial roster.
+#
+# Three catch-all reviewers. Any one is enough to approve a PR
+# (branch protection enforces "1 approval, code-owner review required").
+
+*                                                 @mayank-d3 @AlexSugak @isingh

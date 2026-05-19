@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest an enhancement or new capability.
+title: "[feat] "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe **the use case** before the implementation — what are you trying to do?
+        For **protocol-level** changes (new record types), file at https://github.com/d3-inc/agentroot, not here.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One-sentence description of the feature.
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: What problem does this solve? Concrete example welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed solution
+      description: Optional. If you have a specific implementation in mind, sketch it here.

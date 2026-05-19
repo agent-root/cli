@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: GitHub Discussions — questions, ideas, design
+    url: https://github.com/d3-inc/agentroot/discussions
+    about: Use Discussions for open-ended conversation.
+  - name: Security vulnerability disclosure
+    url: https://github.com/d3-inc/agentroot/security/advisories/new
+    about: Privately report security issues. Do NOT file a public issue.
+  - name: Protocol-level proposals
+    url: https://github.com/d3-inc/agentroot/issues/new?template=protocol_change.yml
+    about: New record types, DNS conventions, manifest schema changes — file in the main agentroot repo.

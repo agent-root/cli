@@ -1,0 +1,159 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import pc from 'picocolors';
+import {
+  hashContent, readInstalledState, upsertInstalled, type InstalledEntry,
+} from '@agent-root/core';
+import { fetch } from '../lib/fetch';
+import { fatal, maybeSpinner } from '../lib/format';
+
+export async function cmdUpdate(positional: string[], flags: Record<string, unknown>): Promise<void> {
+  const state = readInstalledState();
+  const allKeys = Object.keys(state.installed);
+
+  if (positional.length === 0) {
+    if (allKeys.length === 0) {
+      console.log('No AgentRoot records installed.');
+      console.log(`${pc.dim('Install one first: npx agent-root install <domain>/<record-id>')}`);
+      return;
+    }
+
+    console.log(`${pc.bold('Checking ' + allKeys.length + ' installed record(s)...')}\n`);
+    let updated = 0, upToDate = 0, failed = 0;
+
+    for (const key of allKeys) {
+      const entry = state.installed[key];
+      if (!entry) continue;
+      const sourceUrl = entry.source_url;
+      if (!sourceUrl) {
+        console.log(`  ${pc.yellow('skip')} ${key} — no source_url`);
+        continue;
+      }
+
+      let content: string;
+      try {
+        content = await fetch(sourceUrl);
+      } catch (err) {
+        console.log(`  ${pc.red('fail')} ${key} — ${(err as Error).message}`);
+        failed++;
+        continue;
+      }
+
+      const newHash = hashContent(content);
+      if (newHash === entry.version_hash) {
+        console.log(`  ${pc.green('✓')} ${key} — up to date`);
+        upToDate++;
+      } else {
+        propagateContent(entry, content);
+        upsertInstalled({
+          domain: entry.domain,
+          record_id: entry.record_id,
+          type: entry.type,
+          name: entry.name,
+          description: entry.description,
+          source_url: entry.source_url,
+          version_hash: newHash,
+          tools: entry.tools,
+        });
+        console.log(`  ${pc.green('↑')} ${key} — ${pc.bold('updated')} (${newHash.slice(0, 8)})`);
+        updated++;
+      }
+    }
+
+    console.log();
+    const parts: string[] = [];
+    if (upToDate > 0) parts.push(`${upToDate} up to date`);
+    if (updated > 0) parts.push(`${updated} updated`);
+    if (failed > 0) parts.push(`${failed} failed`);
+    console.log(`  ${parts.join(', ')}`);
+    return;
+  }
+
+  const input = positional[0] as string;
+  const slashIdx = input.indexOf('/');
+  if (slashIdx === -1) fatal('Expected format: <domain>/<record-id>', 'Example: agentroot update stripe.com/payments');
+
+  const domain = input.slice(0, slashIdx);
+  const recordId = input.slice(slashIdx + 1);
+  const key = `${domain}/${recordId}`;
+
+  const entry = state.installed[key];
+  if (!entry) {
+    if (flags['json']) {
+      console.log(JSON.stringify({ status: 'not-found', message: `No AgentRoot installation found for ${key}` }));
+    } else {
+      console.log(`No AgentRoot installation found for ${key}`);
+      console.log(`${pc.dim(`Install it first: npx agent-root install ${key}`)}`);
+    }
+    return;
+  }
+
+  const sourceUrl = entry.source_url;
+  if (!sourceUrl) {
+    fatal(`No source_url found in install state for ${key}`, 'Re-install to fix: npx agent-root install ' + key);
+  }
+
+  const updateSpinner = maybeSpinner(`Fetching latest ${key}...`, flags).start();
+
+  let content: string;
+  try {
+    content = await fetch(sourceUrl);
+  } catch (err) {
+    updateSpinner.error({ text: `Failed to fetch ${key}: ${(err as Error).message}` });
+    fatal(`Network error fetching ${sourceUrl}`, 'Check your internet connection and try again');
+  }
+
+  const newHash = hashContent(content);
+  if (newHash === entry.version_hash) {
+    if (updateSpinner.info) updateSpinner.info({ text: 'Already up to date — no changes' });
+    else updateSpinner.success({ text: 'Already up to date — no changes' });
+    if (flags['json']) {
+      console.log(JSON.stringify({ status: 'no-changes', domain, record_id: recordId }));
+    }
+    return;
+  }
+
+  propagateContent(entry, content);
+  upsertInstalled({
+    domain: entry.domain,
+    record_id: entry.record_id,
+    type: entry.type,
+    name: entry.name,
+    description: entry.description,
+    source_url: entry.source_url,
+    version_hash: newHash,
+    tools: entry.tools,
+  });
+  updateSpinner.success({ text: `${key} updated` });
+
+  if (!flags['json']) {
+    for (const [toolName, toolEntry] of Object.entries(entry.tools)) {
+      if (toolEntry.link_type === 'copy') {
+        console.log(`${pc.green('updated')} ${toolName}: ${toolEntry.path} (copy)`);
+      }
+    }
+  }
+
+  if (flags['json']) {
+    console.log(JSON.stringify({ status: 'success', domain, record_id: recordId, version_hash: newHash, propagated_via: 'symlink' }));
+  }
+}
+
+/**
+ * Rewrite SKILL.md in the canonical store and in any per-tool `copy`-link
+ * directories. Symlinks pick up changes automatically once the canonical is
+ * updated, so they need no per-tool action.
+ */
+function propagateContent(entry: InstalledEntry, content: string): void {
+  const canonicalDir = path.join(os.homedir(), '.agents', 'skills', entry.domain, entry.record_id);
+  fs.mkdirSync(canonicalDir, { recursive: true });
+  fs.writeFileSync(path.join(canonicalDir, 'SKILL.md'), content, 'utf-8');
+
+  for (const toolEntry of Object.values(entry.tools)) {
+    if (toolEntry.link_type === 'copy') {
+      fs.mkdirSync(toolEntry.path, { recursive: true });
+      fs.writeFileSync(path.join(toolEntry.path, 'SKILL.md'), content, 'utf-8');
+    }
+  }
+}

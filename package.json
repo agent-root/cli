@@ -1,0 +1,54 @@
+{
+  "name": "agent-root",
+  "version": "0.2.0",
+  "description": "CLI for the AgentRoot protocol. Resolve domains via DNS, discover AI capabilities, install skills and MCP servers.",
+  "bin": {
+    "agent-root": "./dist/bin/agentroot.js",
+    "agentroot": "./dist/bin/agentroot.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "skills",
+    "claude",
+    "codex",
+    "gemini",
+    "cursor",
+    "cli",
+    "mcp",
+    "agentroot"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/d3-inc/agentroot"
+  },
+  "homepage": "https://agentroot.io",
+  "bugs": {
+    "url": "https://github.com/d3-inc/agentroot/issues"
+  },
+  "dependencies": {
+    "@agent-root/core": "file:./vendor/agent-root-core-0.2.0.tgz",
+    "@inquirer/prompts": "^8.3.2",
+    "nanospinner": "^1.2.2",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "5.8.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
