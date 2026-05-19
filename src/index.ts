@@ -22,9 +22,38 @@ import { cmdManifests } from './commands/manifests';
 import { cmdCollections } from './commands/collections';
 import { cmdSubmit } from './commands/submit';
 import { cmdVersion, printShortVersion } from './commands/version';
+import {
+  helpResolve, helpSearch, helpInstall, helpList, helpUpdate, helpUninstall,
+  helpInit, helpValidate, helpConfig, helpStats, helpHealth, helpManifests,
+  helpCollections, helpSubmit, helpVersion,
+} from './commands/help';
 import { parseArgs, applyEnvDefaults } from './cli/parse-args';
 import { fatal } from './cli/fatal';
 import { DOCS_URL } from './constants/protocol';
+
+/**
+ * Map of command (and its aliases) to its per-command help printer.
+ * Looked up in main() when `flags.help` is set and `cmd` is non-empty.
+ * Order matters in main(): the global help check must come AFTER the
+ * `cmd === 'help'` global page so `agent-root help` still works.
+ */
+const PER_COMMAND_HELP: Record<string, () => void> = {
+  resolve: helpResolve, r: helpResolve,
+  search: helpSearch, s: helpSearch,
+  install: helpInstall, i: helpInstall,
+  list: helpList, ls: helpList,
+  update: helpUpdate, up: helpUpdate,
+  uninstall: helpUninstall, rm: helpUninstall, remove: helpUninstall,
+  init: helpInit,
+  validate: helpValidate,
+  config: helpConfig,
+  stats: helpStats,
+  health: helpHealth,
+  manifests: helpManifests,
+  collections: helpCollections,
+  submit: helpSubmit,
+  version: helpVersion,
+};
 
 export function showHelp(): void {
   console.log(`
@@ -55,8 +84,10 @@ ${colors.bold('REGISTRY')}
   ${colors.cyan('collections')} [<slug>]               Browse curated collections
   ${colors.cyan('version')}                            Print version + runtime + config info
 
+  Run ${colors.cyan('agent-root <command> --help')} for command-specific flags and exit codes.
+
 ${colors.bold('OPTIONS')}
-  --help, -h         Show this help
+  --help, -h         Show this help (or per-command help after a command name)
   --version, -v      Print CLI version (one line)
   --tool <name>      Target tool: claude, codex, gemini, cursor, agents
   --type <type>      Filter by record type: agent, mcp, skill, a2a, payment
@@ -143,7 +174,22 @@ export async function main(): Promise<void> {
     return;
   }
 
-  if (flags.help || cmd === 'help') {
+  // `agent-root help` is the global usage page. Goes first so it always wins.
+  if (cmd === 'help') {
+    showHelp();
+    return;
+  }
+
+  // `agent-root <cmd> --help` drills into the per-command page. We check this
+  // BEFORE the bare `--help` global so users get the specific page when both
+  // a command and the flag are present. Falls through to global help if the
+  // command doesn't have a dedicated page (shouldn't happen, but safe).
+  if (flags.help && cmd && PER_COMMAND_HELP[cmd]) {
+    PER_COMMAND_HELP[cmd]();
+    return;
+  }
+
+  if (flags.help) {
     showHelp();
     return;
   }
