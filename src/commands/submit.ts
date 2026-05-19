@@ -1,0 +1,170 @@
+import pc from 'picocolors';
+import { postJSON } from '../services/http/fetch';
+import { getApiBase } from '../services/config/config-service';
+import { resolveAgentroot } from '../services/dns/dns-service';
+import { fatal } from '../cli/fatal';
+import { maybeSpinner } from '../cli/spinner';
+
+interface InstructionsBlock {
+  agentroot?: {
+    record?: string;
+    type?: string;
+    value?: string;
+    skill?: string;
+    inline?: string;
+  };
+  agent?: { record?: string; type?: string; value?: string };
+  skill?: { record?: string; type?: string; value?: string; alternative?: string };
+  spec?: string;
+}
+
+interface SubmitResponse {
+  domain?: string;
+  found?: string[];
+  manifest?: Record<string, unknown> | null;
+  agent?: Record<string, unknown> | null;
+  skill?: Record<string, unknown> | null;
+  success?: boolean;
+  message?: string;
+  records_indexed?: number;
+  validation_errors?: string[];
+  validation_warnings?: string[];
+  instructions?: InstructionsBlock;
+  // Legacy shape some prior versions returned, support both for forward-compat.
+  verification_required?: boolean;
+  txt_record?: string;
+}
+
+function printInstructions(domain: string, instructions: InstructionsBlock | undefined): void {
+  if (!instructions) return;
+  const ar = instructions.agentroot;
+  if (ar && ar.value) {
+    console.log();
+    console.log(`  ${pc.bold('Add this DNS TXT record, then re-submit:')}`);
+    console.log();
+    console.log(`    ${pc.dim('host:')}  ${ar.record ?? `_agentroot.${domain}`}`);
+    console.log(`    ${pc.dim('type:')}  ${ar.type ?? 'TXT'}`);
+    console.log(`    ${pc.dim('value:')} ${ar.value}`);
+    console.log();
+    console.log(`  ${pc.dim('Once propagated:')} ${pc.cyan(`agent-root submit ${domain}`)}`);
+    console.log();
+    if (instructions.spec) {
+      console.log(`  ${pc.dim('Reference:')} ${instructions.spec}`);
+    }
+  }
+}
+
+function printValidationErrors(errs: string[] | undefined, warnings: string[] | undefined): boolean {
+  let printed = false;
+  if (errs && errs.length > 0) {
+    console.log();
+    console.log(`  ${pc.bold(pc.red('Validation errors:'))}`);
+    for (const e of errs) {
+      console.log(`    ${pc.red('-')} ${e}`);
+    }
+    printed = true;
+  }
+  if (warnings && warnings.length > 0) {
+    console.log();
+    console.log(`  ${pc.bold(pc.yellow('Warnings:'))}`);
+    for (const w of warnings) {
+      console.log(`    ${pc.yellow('-')} ${w}`);
+    }
+    printed = true;
+  }
+  return printed;
+}
+
+interface ResolvedSubmit {
+  body: Record<string, unknown>;
+  resolvedManifestUrl: string | null;
+}
+
+/**
+ * Build the POST body. If the user didn't pass `--manifest-url`, try to
+ * DNS-resolve the domain first, the registry can verify either way, but
+ * surfacing the manifest URL we found in the CLI output helps the user
+ * confirm their DNS is set up right.
+ */
+async function buildSubmitBody(domain: string, manifestUrlFlag: string | undefined): Promise<ResolvedSubmit> {
+  const body: Record<string, unknown> = { domain };
+  if (manifestUrlFlag) {
+    body['manifest_url'] = manifestUrlFlag;
+    return { body, resolvedManifestUrl: manifestUrlFlag };
+  }
+  const probe = await resolveAgentroot(domain);
+  if (probe.found && probe.mode === 'manifest') {
+    body['manifest_url'] = probe.manifestUrl;
+    return { body, resolvedManifestUrl: probe.manifestUrl };
+  }
+  return { body, resolvedManifestUrl: null };
+}
+
+export async function cmdSubmit(positional: string[], flags: Record<string, unknown>): Promise<void> {
+  const domain = positional[0];
+  if (!domain) {
+    fatal('Usage: agent-root submit <domain> [--manifest-url <url>]', 'Example: agent-root submit mycompany.com');
+  }
+
+  const manifestUrlFlag = typeof flags['manifest-url'] === 'string'
+    ? flags['manifest-url'] as string
+    : typeof flags['manifestUrl'] === 'string' ? flags['manifestUrl'] as string : undefined;
+
+  const spinner = maybeSpinner(`Submitting ${domain} to the registry...`, flags).start();
+
+  const { body, resolvedManifestUrl } = await buildSubmitBody(domain, manifestUrlFlag);
+
+  let response: { status: number; body: SubmitResponse };
+  try {
+    response = await postJSON<SubmitResponse>(`${getApiBase()}/api/submit`, body);
+  } catch (err) {
+    spinner.error({ text: `Could not submit ${domain}` });
+    if (flags['json']) {
+      console.log(JSON.stringify({ success: false, error: (err as Error).message }, null, 2));
+    }
+    fatal((err as Error).message);
+  }
+
+  const data = response.body;
+
+  if (flags['json']) {
+    spinner.stop();
+    console.log(JSON.stringify(data, null, 2));
+    if (!data.success) process.exit(1);
+    return;
+  }
+
+  // Success path, the registry verified DNS and indexed the manifest.
+  if (data.success) {
+    spinner.success({ text: data.message ?? `Submitted ${domain}` });
+    if (resolvedManifestUrl) {
+      console.log();
+      console.log(`  ${pc.dim('manifest:')} ${resolvedManifestUrl}`);
+    }
+    if (typeof data.records_indexed === 'number') {
+      console.log(`  ${pc.dim('indexed:')}  ${data.records_indexed} record(s)`);
+    }
+    const found = data.found ?? [];
+    if (found.length > 0) {
+      console.log(`  ${pc.dim('found:')}    ${found.join(', ')}`);
+    }
+    return;
+  }
+
+  // Failure paths, either DNS isn't set up yet or the manifest failed validation.
+  spinner.error({ text: data.message ?? `Submission failed for ${domain}` });
+
+  const hadValidation = printValidationErrors(data.validation_errors, data.validation_warnings);
+
+  // Legacy shape: explicit verification_required + txt_record at top level.
+  if (data.verification_required && data.txt_record) {
+    console.log();
+    console.log(`  ${pc.bold('Add this DNS TXT record, then re-submit:')}`);
+    console.log(`    ${pc.dim('value:')} ${data.txt_record}`);
+  } else if (!hadValidation) {
+    // Current shape: print the `instructions` block when DNS lookup failed.
+    printInstructions(domain, data.instructions);
+  }
+
+  process.exit(1);
+}
