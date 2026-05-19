@@ -12,6 +12,8 @@ import type { JsonOut } from '../types/install';
 // Re-exported for callers that still import these from this module.
 export type { SkillMeta, JsonOut } from '../types/install';
 
+// --- public: per-type installers ---
+
 export function installMcp(
   domain: string,
   recordId: string | null,
@@ -22,16 +24,7 @@ export function installMcp(
   const transport = (record['transport'] as string) || 'sse';
   const endpoint = record['endpoint'] as string | undefined;
   const mcpName = `${domain}/${recordId}`;
-  let configObject: Record<string, unknown> | null = null;
-
-  if (transport === 'stdio' && record['install']) {
-    const inst = record['install'] as Record<string, unknown>;
-    const cmd = (inst['command'] as string) || `npx ${inst['package'] as string}`;
-    const parts = cmd.split(' ');
-    configObject = { [mcpName]: { command: parts[0], args: parts.slice(1) } };
-  } else if (endpoint) {
-    configObject = { [mcpName]: { url: endpoint } };
-  }
+  const configObject = buildMcpConfigObject(transport, record, endpoint, mcpName);
 
   jsonOut.type = 'mcp';
   jsonOut.installed.push({
@@ -78,8 +71,9 @@ export function installAgent(
   flags: Record<string, unknown>,
   jsonOut: JsonOut,
 ): void {
-  const typeLabel = RECORD_TYPES[record['type'] as string] || record['type'] as string;
-  jsonOut.type = record['type'] as string;
+  const recordTypeStr = record['type'] as string;
+  const typeLabel = RECORD_TYPES[recordTypeStr] || recordTypeStr;
+  jsonOut.type = recordTypeStr;
   jsonOut.installed.push({
     name: record['name'] || recordId,
     endpoint: record['endpoint'],
@@ -105,6 +99,8 @@ export function installAgent(
   const protoLabel = record['protocol'] || 'a2a';
   console.log(pc.dim(`Agents are accessed via their endpoint. Use the protocol (${protoLabel}) to connect.`));
 }
+
+// --- public: command entry point ---
 
 export async function cmdInstall(positional: string[], flags: Record<string, unknown>): Promise<void> {
   if (positional.length === 0) {
@@ -171,10 +167,12 @@ export async function cmdInstall(positional: string[], flags: Record<string, unk
       spinner.update({ text: 'Fetching manifest from registry...' });
       const manifestUrl = `${getApiBase()}/api/manifests/${encodeURIComponent(domain)}`;
       const manifestData = await fetchJSON<{ manifest?: Record<string, unknown> }>(manifestUrl);
-      const z = manifestData.manifest || manifestData as Record<string, unknown>;
-      const zRec = z as Record<string, unknown>;
-      if (zRec['records'] || zRec['raw_manifest']) {
-        manifest = (zRec['raw_manifest'] || zRec) as Record<string, unknown>;
+      // Some API revisions wrap the manifest in a `manifest` envelope; older
+      // ones return the bare shape. `??` (not `||`) so an explicit `null`
+      // wrapper still falls through to the bare envelope.
+      const envelope = manifestData.manifest ?? (manifestData as Record<string, unknown>);
+      if (envelope['records'] || envelope['raw_manifest']) {
+        manifest = (envelope['raw_manifest'] || envelope) as Record<string, unknown>;
         if (manifest['records'] && recordId) {
           const records = manifest['records'] as Array<Record<string, unknown>>;
           record = records.find(r => r['id'] === recordId) || null;
@@ -187,26 +185,79 @@ export async function cmdInstall(positional: string[], flags: Record<string, unk
     }
   }
 
-  const recordType = record ? record['type'] as string : ((flags['type'] as string) || null);
+  const recordType: string | null =
+    (record?.['type'] as string | undefined) ?? (flags['type'] as string | undefined) ?? null;
   const jsonOut: JsonOut = { status: 'success', domain, recordId, type: null, installed: [], skipped: [], errors: [] };
 
-  if (recordType === 'mcp') {
-    spinner.success({ text: 'Resolved ' + ((record ? (record['name'] || recordId) : domain) as string) });
-    installMcp(domain, recordId, record || {}, flags, jsonOut);
-    if (flags['json']) { console.log(JSON.stringify(jsonOut, null, 2)); }
-    return;
-  }
+  // Shared `Resolved <X>` label — same source-of-truth for every branch.
+  const resolvedLabel = (record ? (record['name'] || recordId) : domain) as string;
+  spinner.success({ text: 'Resolved ' + resolvedLabel });
 
-  if (recordType === 'agent' || recordType === 'a2a') {
-    spinner.success({ text: 'Resolved ' + ((record ? (record['name'] || recordId) : domain) as string) });
-    installAgent(domain, recordId, record || {}, flags, jsonOut);
-    if (flags['json']) { console.log(JSON.stringify(jsonOut, null, 2)); }
-    return;
-  }
+  // Dispatch on record type. Skill is the implicit default — anything that
+  // isn't explicitly mcp/agent/a2a falls through to `installSkill`.
+  const handler = TYPE_HANDLERS[recordType ?? ''] ?? defaultSkillHandler;
+  await handler({ domain, recordId, record, manifest, installAll, isProject, flags, jsonOut });
 
-  spinner.success({ text: 'Resolved ' + ((record ? (record['name'] || recordId) : domain) as string) });
-  await installSkill({ domain, recordId, record, manifest, installAll, isProject, flags, jsonOut });
-  if (flags['json']) { console.log(JSON.stringify(jsonOut, null, 2)); }
+  if (flags['json']) console.log(JSON.stringify(jsonOut, null, 2));
 }
 
 export { searchWithFallback, selectResult };
+
+// --- private helpers ---
+
+interface DispatchContext {
+  domain: string;
+  recordId: string | null;
+  record: Record<string, unknown> | null;
+  manifest: Record<string, unknown> | null;
+  installAll: boolean;
+  isProject: boolean;
+  flags: Record<string, unknown>;
+  jsonOut: JsonOut;
+}
+
+type TypeHandler = (ctx: DispatchContext) => Promise<void> | void;
+
+const TYPE_HANDLERS: Record<string, TypeHandler> = {
+  mcp: ({ domain, recordId, record, flags, jsonOut }) => {
+    installMcp(domain, recordId, record || {}, flags, jsonOut);
+  },
+  agent: ({ domain, recordId, record, flags, jsonOut }) => {
+    installAgent(domain, recordId, record || {}, flags, jsonOut);
+  },
+  a2a: ({ domain, recordId, record, flags, jsonOut }) => {
+    installAgent(domain, recordId, record || {}, flags, jsonOut);
+  },
+};
+
+const defaultSkillHandler: TypeHandler = async ({
+  domain, recordId, record, manifest, installAll, isProject, flags, jsonOut,
+}) => {
+  await installSkill({ domain, recordId, record, manifest, installAll, isProject, flags, jsonOut });
+};
+
+/**
+ * Build the MCP client config object for a record. Two shapes:
+ *   - stdio + `install` block → `{ command, args }`
+ *   - any other transport with an `endpoint` → `{ url }`
+ *
+ * Returns `null` if neither shape can be produced — callers display nothing
+ * in that case, matching prior behavior.
+ */
+function buildMcpConfigObject(
+  transport: string,
+  record: Record<string, unknown>,
+  endpoint: string | undefined,
+  mcpName: string,
+): Record<string, unknown> | null {
+  if (transport === 'stdio' && record['install']) {
+    const inst = record['install'] as Record<string, unknown>;
+    const cmd = (inst['command'] as string) || `npx ${inst['package'] as string}`;
+    const parts = cmd.split(' ');
+    return { [mcpName]: { command: parts[0], args: parts.slice(1) } };
+  }
+  if (endpoint) {
+    return { [mcpName]: { url: endpoint } };
+  }
+  return null;
+}
