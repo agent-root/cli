@@ -581,16 +581,41 @@ The `code` is one of the symbolic names in the [Exit codes](#exit-codes) table. 
 
 ## Documentation
 
-- **Protocol specification**: [agentroot.io/docs/protocol](https://agentroot.io/docs/protocol)
-- **Contributing guide**: [CONTRIBUTING.md](.github/CONTRIBUTING.md)
-- **Security policy**: [SECURITY.md](.github/SECURITY.md)
-- **Support channels**: [SUPPORT.md](.github/SUPPORT.md)
-- **Maintainers**: [MAINTAINERS.md](MAINTAINERS.md)
-- **Testing recipe**: [TESTING.md](docs/TESTING.md)
+| What you need | Where it lives |
+|---|---|
+| Protocol spec | [agentroot.io/docs/protocol](https://agentroot.io/docs/protocol) |
+| Contributing guide (fork + PR flow, dev setup, tests, triage) | [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) |
+| Code of Conduct | [.github/CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md) |
+| Security policy + private vuln reporting | [.github/SECURITY.md](.github/SECURITY.md) |
+| Support channels (bug? feature? question?) | [.github/SUPPORT.md](.github/SUPPORT.md) |
+| Project governance (roles, decisions, lead, conflict resolution) | [GOVERNANCE.md](GOVERNANCE.md) |
+| Current and emeritus maintainers | [MAINTAINERS.md](MAINTAINERS.md) |
+| Smoke-test recipe + manual verification | [docs/TESTING.md](docs/TESTING.md) |
+| Release notes | [CHANGELOG.md](CHANGELOG.md) |
+| AI-assistant project conventions | [CLAUDE.md](CLAUDE.md) |
+
+Repo layout:
+
+```text
+.            README + LICENSE + CHANGELOG + GOVERNANCE + MAINTAINERS + CLAUDE
+.github/     CONTRIBUTING + CODE_OF_CONDUCT + SECURITY + SUPPORT
+.github/     ISSUE_TEMPLATE/ + PULL_REQUEST_TEMPLATE.md + CODEOWNERS + workflows + dependabot.yml
+docs/        TESTING + screenshots/
+src/         source code (see CLAUDE.md for the cli/, commands/, services/ layout)
+tests/       vitest unit + integration tests
+```
 
 ## Contributing
 
-Contributions are welcome: bug reports, fixes, documentation improvements, new commands, new flags, new tool integrations. See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the development setup, test workflow, and PR checklist.
+Contributions are welcome: bug reports, fixes, documentation improvements, new commands, new flags, new tool integrations.
+
+- **Report a bug or request a feature**: open an issue. Use the [bug report](.github/ISSUE_TEMPLATE/bug_report.yml) or [feature request](.github/ISSUE_TEMPLATE/feature_request.yml) template. Issue templates auto-apply the `triage` label; a maintainer leaves a first-response comment within ~7 days.
+- **Ask a question**: open a [Discussion](https://github.com/d3-inc/agentroot/discussions) (once enabled). Discussions are best-effort with no SLA.
+- **Send a code change**: fork the repo, make a branch, push, open a PR against `main`. The full step-by-step (including how to keep your fork in sync, rebase before merge, and the PR checklist) is in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md).
+- **Reading the code**: [CLAUDE.md](CLAUDE.md) is the structural-conventions reference (file ordering, single-source-of-truth list, exit codes, streams). Worth a scan before your first non-trivial PR.
+- **Find something to work on**: filter open issues by `good first issue` or `help wanted`.
+
+See [GOVERNANCE.md](GOVERNANCE.md) for how decisions are made and how new maintainers are added.
 
 ## License
 
