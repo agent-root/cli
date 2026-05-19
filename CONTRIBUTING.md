@@ -15,19 +15,51 @@ By participating, you agree to abide by the [Contributor Covenant](CODE_OF_CONDU
 
 ## Development setup
 
+We use the standard **fork and pull-request** workflow that GitHub-hosted OSS projects follow. Nobody pushes directly to this repository's `main` branch; every change lands through a reviewed PR from a fork.
+
 Prerequisites:
 
-- Node.js 18 or later (22 LTS recommended; we test against 22 and 24)
+- Node.js 18 or later (22 LTS recommended; CI tests against 22 and 24)
 - pnpm (any recent version)
+- A GitHub account
+
+### 1. Fork the repo
+
+Click **Fork** on the repository page on GitHub. This creates `https://github.com/<your-username>/agentroot` (or `/agent-root-cli` once the standalone is live), a copy you control.
+
+### 2. Clone your fork and add the upstream remote
 
 ```bash
-git clone https://github.com/d3-inc/agentroot.git
-cd agentroot  # once the standalone repo is live: cd agent-root-cli
+# Replace <your-username> with your GitHub handle
+git clone https://github.com/<your-username>/agentroot.git
+cd agentroot   # or: cd agent-root-cli, once the standalone repo is live
+
+# Track the canonical repo as 'upstream' so you can pull in changes
+git remote add upstream https://github.com/d3-inc/agentroot.git
+git remote -v   # confirm: origin = your fork, upstream = canonical
+```
+
+### 3. Install + build
+
+```bash
 pnpm install
 pnpm build
 ```
 
 The CLI depends on `@agent-root/core` from npm. No workspace / monorepo setup needed.
+
+### 4. Keep your fork up to date
+
+Before starting new work, sync your fork with upstream:
+
+```bash
+git fetch upstream
+git checkout main
+git merge --ff-only upstream/main
+git push origin main
+```
+
+If `--ff-only` fails because your local `main` has commits, that is a sign you committed straight to `main` instead of a feature branch. Move those commits to a feature branch (`git branch feature/x && git reset --hard upstream/main`) and re-push.
 
 ## Running locally
 
@@ -61,13 +93,75 @@ This runs `scripts/capture-screenshots.mjs`. The script executes each command, c
 
 You'll need Playwright's Chromium binary the first time (`pnpm exec playwright install chromium`). The recipe is in the script. Add or modify recipes there.
 
-## Branching and PRs
+## Branching and pull requests
 
-- Fork the repo, branch off `main`.
-- Branch naming: `feature/short-description`, `fix/short-description`, or `docs/short-description`.
-- Open the PR against `main`. PRs require **1 review** before merging.
-- CI must be green (type-check, build, **tests**).
-- Linear history is enforced. Rebase instead of merging `main` into your branch.
+All work happens on a feature branch inside your fork. PRs open against the canonical repo's `main` branch.
+
+### Make a branch
+
+```bash
+git checkout main
+git pull --ff-only upstream main
+git checkout -b feature/short-description   # or fix/..., or docs/...
+```
+
+Branch naming convention:
+
+- `feature/<short-description>` for new commands, flags, or behaviors
+- `fix/<short-description>` for bug fixes
+- `docs/<short-description>` for documentation-only changes
+- `chore/<short-description>` for tooling, deps, or build tweaks
+
+### Push and open the PR
+
+```bash
+git push -u origin feature/short-description
+```
+
+GitHub will print a URL to open a pull request. The base repo is `d3-inc/agentroot` (or the canonical standalone repo once it is live), base branch `main`. Head is your fork's feature branch.
+
+### Review requirements
+
+- **At least 1 maintainer approval** is required before merge.
+- **CI must be green** (type-check, build, tests). Failing CI blocks merge.
+- **Code-owner review** is required for changes in any `CODEOWNERS`-listed path.
+- **Linear history** is enforced. Rebase your branch onto the latest `main` rather than merging `main` into your branch:
+
+  ```bash
+  git fetch upstream
+  git rebase upstream/main
+  git push --force-with-lease
+  ```
+
+- **Squash merging is the default** for small PRs; multi-commit PRs that tell a story (e.g. "extract helper" + "use helper" + "remove old call sites") may be merged with their history preserved at the maintainer's discretion.
+
+### After merge
+
+- Delete your feature branch (GitHub offers a button after merge; or `git push origin --delete feature/...`).
+- Sync your fork's `main` from `upstream/main` (the four commands under "Keep your fork up to date" above).
+
+## Branch protection
+
+The canonical repo's `main` branch is configured (by repo administrators) so that:
+
+- **Direct pushes to `main` are blocked.** Every change lands through a PR.
+- **At least 1 review approval is required** before a PR can merge.
+- **CI status checks must pass** before merge (the `Build / Type-check (Node 22)` and `Build / Type-check (Node 24)` jobs from `.github/workflows/ci.yml`, plus `Unit tests` and `Smoke test` within each).
+- **Code-owner review is required** when files matching `.github/CODEOWNERS` change.
+- **Stale reviews are dismissed** when new commits are pushed to a PR.
+- **Force pushes to `main` are forbidden.**
+
+Maintainers verify these settings under **Settings → Branches → Branch protection rules** on the GitHub repo page. New maintainers do not need write access to `main` directly; the same fork-and-PR flow applies. A maintainer's elevated privilege is approving PRs and merging, not bypassing the rules.
+
+### Why this matters for publishing
+
+There is no automated publish pipeline today (see [Releasing](#releasing)), and the package has not been published to npm under this repo's control. But once we do publish:
+
+- The `agent-root` npm package will be public, so anyone can install it.
+- Nobody outside the maintainer team can push directly to this repo because of branch protection, so nobody outside the team can land code that ends up in a published tarball.
+- The publish step itself (when it is added) will run from a tagged commit on `main`, which by definition has been through review.
+
+This is the standard OSS pattern: open package, restricted-write repo, gated by PR review.
 
 ## Commit conventions
 
