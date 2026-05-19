@@ -23,6 +23,7 @@ The command-line client for the **AgentRoot protocol**. Resolve domains to disco
   - [Publish your own manifest](#publish-your-own-manifest)
   - [Browse, stats, and submit](#browse-stats-and-submit)
 - [How it works](#how-it-works)
+  - [Exit codes](#exit-codes)
 - [Configuration](#configuration)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
@@ -141,7 +142,7 @@ Flag names accept both kebab-case (`--manifest-url`) and camelCase (`--manifestU
 
 All spinners, progress notes, and chatter go to **stderr**. Data and JSON output go to **stdout**. That means `agent-root <cmd> --json | jq .` works without `2>/dev/null` — pipes never carry color codes or progress lines.
 
-Run `agent-root <command> --help` for command-specific flags.
+Run `agent-root <command> --help` for a per-command page covering just that command's flags, examples, and the exact [exit codes](#exit-codes) it can return. For example, `agent-root resolve --help` documents `--no-install`; `agent-root search --help` documents `--type` / `--page` / `--limit`.
 
 ### Version & environment
 
@@ -473,6 +474,39 @@ Both forms accept `--json` for scripting.
 3. If still nothing and the query is a bare keyword, it treats it as a domain by appending `.io` then `.com` and looks up the manifest directly
 
 The public registry at [agentroot.io](https://agentroot.io) is a convenience for `search`, `stats`, `health`, `manifests`, `collections`, and `submit`, not a dependency for the core protocol. `resolve`, `install`, `update`, and `uninstall` all work even if the registry is offline, because they go through DNS.
+
+### Exit codes
+
+`agent-root` returns sysexits-style exit codes so shell scripts can branch on the failure mode. Source: [`man 3 sysexits`](https://man.freebsd.org/cgi/man.cgi?query=sysexits).
+
+| Code | Name | Meaning |
+|---|---|---|
+| `0` | `OK` | Success |
+| `1` | `GENERIC` | Unspecified error |
+| `2` | `USAGE` | Bad CLI arguments (missing positional, unknown command, conflicting flags) |
+| `66` | `NOINPUT` | File not found (`validate /nonexistent`, `init` without `--force` when file exists) |
+| `68` | `NOHOST` | DNS lookup failed, no `_agentroot` TXT record, domain not in registry |
+| `69` | `UNAVAILABLE` | Registry unreachable, manifest fetch failed, network 5xx |
+| `76` | `PROTOCOL` | Manifest validation failed against the protocol schema |
+| `77` | `NOPERM` | Permission denied writing to `~/.agentroot` or `~/.claude/skills` |
+| `78` | `CONFIG` | Configuration error (installed record missing source_url, corrupted state) |
+
+In `--json` mode, errors are emitted as a single envelope on stdout (not stderr) with the same exit code, so scripts can branch on `jq '.error.code'` and `$?` together:
+
+```bash
+$ agent-root resolve nonexistent.test --json
+{
+  "error": {
+    "code": "NOHOST",
+    "message": "No _agentroot.nonexistent.test TXT record found",
+    "hint": "Try: agentroot search nonexistent"
+  }
+}
+$ echo $?
+68
+```
+
+For per-command exit-code tables, run `agent-root <command> --help`.
 
 ## Configuration
 
