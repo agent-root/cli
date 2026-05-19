@@ -50,6 +50,120 @@ describe('parseArgs', () => {
     expect(r.cmd).toBe('config')
     expect(r.positional).toEqual(['set', 'api-url', 'https://x.com'])
   })
+
+  describe('short aliases', () => {
+    it('treats -h as --help', () => {
+      const r = parseArgs(['node', 'agentroot', '-h'])
+      expect(r.flags['help']).toBe(true)
+    })
+
+    it('treats -v as --version', () => {
+      const r = parseArgs(['node', 'agentroot', '-v'])
+      expect(r.flags['version']).toBe(true)
+    })
+
+    it('treats -y, -f, -q, -j as their long forms', () => {
+      const r = parseArgs(['node', 'agentroot', 'install', 'x.com/y', '-y', '-f', '-q', '-j'])
+      expect(r.flags['yes']).toBe(true)
+      expect(r.flags['force']).toBe(true)
+      expect(r.flags['quiet']).toBe(true)
+      expect(r.flags['json']).toBe(true)
+    })
+
+    it('treats multi-char single-dash tokens as positionals, not short flags', () => {
+      const r = parseArgs(['node', 'agentroot', 'install', '-foo'])
+      expect(r.positional).toEqual(['-foo'])
+      expect(r.flags['foo']).toBeUndefined()
+    })
+
+    it('does not consume a short alias as the value of a preceding long flag', () => {
+      const r = parseArgs(['node', 'agentroot', 'install', 'x.com', '--tool', '-j'])
+      expect(r.flags['tool']).toBe(true)
+      expect(r.flags['json']).toBe(true)
+    })
+  })
+
+  describe('--key=value syntax', () => {
+    it('parses --tool=claude equivalently to --tool claude', () => {
+      const r = parseArgs(['node', 'agentroot', 'install', 'x.com', '--tool=claude'])
+      expect(r.flags['tool']).toBe('claude')
+    })
+
+    it('supports values containing = signs', () => {
+      const r = parseArgs(['node', 'agentroot', 'config', '--query=a=b'])
+      expect(r.flags['query']).toBe('a=b')
+    })
+
+    it('parses --json=false as boolean false', () => {
+      const r = parseArgs(['node', 'agentroot', 'search', 'x', '--json=false'])
+      expect(r.flags['json']).toBe(false)
+    })
+
+    it('parses --json=true as boolean true', () => {
+      const r = parseArgs(['node', 'agentroot', 'search', 'x', '--json=true'])
+      expect(r.flags['json']).toBe(true)
+    })
+  })
+
+  describe('-- end-of-options separator', () => {
+    it('treats every token after -- as positional', () => {
+      const r = parseArgs(['node', 'agentroot', 'resolve', '--', '--special', '-j'])
+      expect(r.positional).toEqual(['--special', '-j'])
+      expect(r.flags['special']).toBeUndefined()
+      expect(r.flags['json']).toBeUndefined()
+    })
+
+    it('does not treat -- itself as a positional', () => {
+      const r = parseArgs(['node', 'agentroot', 'resolve', '--', 'doma.xyz'])
+      expect(r.positional).toEqual(['doma.xyz'])
+    })
+
+    it('still honors flags before --', () => {
+      const r = parseArgs(['node', 'agentroot', 'resolve', '--json', '--', '--literal'])
+      expect(r.flags['json']).toBe(true)
+      expect(r.positional).toEqual(['--literal'])
+    })
+  })
+
+  describe('--no-X negation', () => {
+    it('preserves the literal --no-install as a positive flag', () => {
+      const r = parseArgs(['node', 'agentroot', 'resolve', 'doma.xyz', '--no-install'])
+      expect(r.flags['noInstall']).toBe(true)
+    })
+
+    it('treats --no-json as json=false', () => {
+      const r = parseArgs(['node', 'agentroot', 'search', 'x', '--no-json'])
+      expect(r.flags['json']).toBe(false)
+    })
+
+    it('treats --no-yes as yes=false', () => {
+      const r = parseArgs(['node', 'agentroot', 'install', 'x.com/y', '--no-yes'])
+      expect(r.flags['yes']).toBe(false)
+    })
+  })
+
+  describe('kebab ≡ camelCase', () => {
+    it('normalizes --no-install to noInstall', () => {
+      const r = parseArgs(['node', 'agentroot', 'resolve', 'x.com', '--no-install'])
+      expect(r.flags['noInstall']).toBe(true)
+    })
+
+    it('normalizes --manifest-url to manifestUrl', () => {
+      const r = parseArgs(['node', 'agentroot', 'submit', 'x.com', '--manifest-url', 'https://x.com/m.json'])
+      expect(r.flags['manifestUrl']).toBe('https://x.com/m.json')
+    })
+
+    it('accepts --noInstall and --manifestUrl camelCase forms', () => {
+      const r = parseArgs(['node', 'agentroot', 'submit', 'x.com', '--noInstall', '--manifestUrl', 'https://x.com/m.json'])
+      expect(r.flags['noInstall']).toBe(true)
+      expect(r.flags['manifestUrl']).toBe('https://x.com/m.json')
+    })
+
+    it('normalizes snake_case as well', () => {
+      const r = parseArgs(['node', 'agentroot', 'submit', 'x.com', '--manifest_url', 'https://x.com/m.json'])
+      expect(r.flags['manifestUrl']).toBe('https://x.com/m.json')
+    })
+  })
 })
 
 describe('RECORD_TYPES', () => {

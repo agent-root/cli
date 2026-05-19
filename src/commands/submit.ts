@@ -116,9 +116,8 @@ export async function cmdSubmit(positional: string[], flags: Record<string, unkn
     fatal('Usage: agent-root submit <domain> [--manifest-url <url>]', 'Example: agent-root submit mycompany.com');
   }
 
-  const manifestUrlFlag = typeof flags['manifest-url'] === 'string'
-    ? flags['manifest-url'] as string
-    : typeof flags['manifestUrl'] === 'string' ? flags['manifestUrl'] as string : undefined;
+  // parseArgs normalizes --manifest-url to camelCase, so we only read one key.
+  const manifestUrlFlag = typeof flags['manifestUrl'] === 'string' ? flags['manifestUrl'] : undefined;
 
   const spinner = maybeSpinner(`Submitting ${domain} to the registry...`, flags).start();
 
