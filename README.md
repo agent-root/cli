@@ -46,11 +46,9 @@ Publication happens entirely through DNS. A domain owner creates one TXT record:
 _agentroot.example.com  TXT  "v=ar1 manifest=https://example.com/.well-known/agentroot.json"
 ```
 
-That TXT record points to a JSON manifest listing the records the domain offers. No central authority, no API keys, no gatekeeping. Anyone with a domain can publish. Anyone with a DNS client can discover.
+That TXT record points to a JSON manifest listing the records the domain offers. No central authority, no API keys, no gatekeeping; anyone with a domain can publish, anyone with a DNS client can discover.
 
-`agent-root` is the reference CLI for the **consumer** side of this protocol. You use it to find capabilities, install them into your AI tools, and (optionally) publish your own.
-
-The protocol specification and public registry live at [agentroot.io](https://agentroot.io).
+`agent-root` is the reference CLI for the **consumer** side: find capabilities, install them into your AI tools, and (optionally) publish your own. The protocol specification and public registry live at [agentroot.io](https://agentroot.io).
 
 ## What you can do with this CLI
 
@@ -139,9 +137,9 @@ OPTIONS
   --no-color         Disable ANSI color (also auto-off in non-TTY)
 ```
 
-Flag names accept both kebab-case (`--manifest-url`) and camelCase (`--manifestUrl`). Use `--key=value` or `--key value`. Pass `--` to stop option parsing (any subsequent token is positional, even if it starts with `--`).
+Flag names accept kebab-case (`--manifest-url`) or camelCase (`--manifestUrl`); use `--key=value` or `--key value`. Pass `--` to stop option parsing.
 
-All spinners, progress notes, and chatter go to **stderr**. Data and JSON output go to **stdout**. That means `agent-root <cmd> --json | jq .` works without `2>/dev/null` — pipes never carry color codes or progress lines.
+All spinners, progress notes, and chatter go to **stderr**. Data and JSON output go to **stdout**. That means `agent-root <cmd> --json | jq .` works without `2>/dev/null`; pipes never carry color codes or progress lines.
 
 Run `agent-root <command> --help` for a per-command page covering just that command's flags, examples, and the exact [exit codes](#exit-codes) it can return. For example, `agent-root resolve --help` documents `--no-install`; `agent-root search --help` documents `--type` / `--page` / `--limit`.
 
@@ -207,7 +205,7 @@ Use `--no-install` if you want to inspect a `skill=` shorthand record without au
 
 ### Search the registry
 
-Use this when you do not know which domain publishes what you need. Search hits the public registry, which indexes every domain that has been submitted at [agentroot.io/submit](https://agentroot.io/submit).
+Use this when you don't know which domain publishes what you need. Search hits the public registry, which indexes every domain submitted at [agentroot.io/submit](https://agentroot.io/submit).
 
 ```bash
 agent-root search doma
@@ -233,7 +231,7 @@ agent-root search doma --json | jq '.total, .pages'
 
 ### Install a skill into your project
 
-This is where the protocol pays off. Pick a record, point `--tool` at your AI assistant, and the CLI does the rest: fetches the `SKILL.md`, fetches every supporting file referenced inside it, and writes everything to the directory your tool reads from.
+Pick a record, point `--tool` at your AI assistant, and the CLI fetches the `SKILL.md` plus every supporting file it references and writes them to the directory your tool reads from.
 
 ```bash
 cd your-project
@@ -242,7 +240,7 @@ agent-root install doma.xyz/doma-protocol --tool agents --project
 
 ![](docs/screenshots/install.png)
 
-After the install, the SKILL.md and its supporting files are present in the directory your AI tool expects. Open Claude (or Cursor, Codex, Gemini, etc.), start a conversation, and the skill is available.
+After install, open Claude (or Cursor, Codex, Gemini, etc.) and the skill is available.
 
 #### Supported AI tools
 
@@ -275,8 +273,6 @@ agent-root install doma.xyz --all --tool agents
 
 #### Discovering and installing in one flow
 
-A common workflow: you know roughly what you need but not where to find it.
-
 ```bash
 # Step 1: search
 agent-root search "domain registration" --type skill
@@ -288,7 +284,7 @@ agent-root install doma.xyz/doma-mpp --tool claude --project
 agent-root list
 ```
 
-Running `agent-root search` interactively (without `--json` and inside a TTY) also offers an "install this record?" prompt at the end, so you can do it in one shot.
+Running `agent-root search` interactively (without `--json` and inside a TTY) also offers an "install this record?" prompt at the end.
 
 ### Manage what you have installed
 
@@ -301,7 +297,7 @@ agent-root list --json
 
 ![](docs/screenshots/list.png)
 
-For very large install lists, pipe to `less` or use `--json` to filter with `jq`.
+For long lists, pipe to `less` or use `--json` to filter with `jq`.
 
 To re-fetch a previously installed record (useful when the publisher has updated the SKILL.md):
 
@@ -466,13 +462,9 @@ Both forms accept `--json` for scripting.
 3. Files are written to a canonical store at `~/.agents/skills/<domain>/<record-id>/`
 4. For each `--tool` you pass, a symlink (or a copy with `--project`) is created in that tool's expected location
 
-**When you run `agent-root search query`:**
+**When you run `agent-root search query`:** the CLI hits the registry's paginated `/api/records` endpoint with the query, optional type filter, page, and limit. If page 1 is empty it falls back to `/api/find-skills` (legacy, skill-only); if still nothing and the query is a bare keyword, it treats it as a domain by appending `.io` then `.com` and looks up the manifest directly.
 
-1. The CLI hits the registry's paginated `/api/records` endpoint (the same one the web UI uses) with the query, optional type filter, page, and limit
-2. If page 1 came back empty, it falls back to `/api/find-skills` (legacy, skill-only)
-3. If still nothing and the query is a bare keyword, it treats it as a domain by appending `.io` then `.com` and looks up the manifest directly
-
-The public registry at [agentroot.io](https://agentroot.io) is a convenience for `search`, `health`, `manifests`, `collections`, and `submit`, not a dependency for the core protocol. `resolve`, `install`, `update`, and `uninstall` all work even if the registry is offline, because they go through DNS.
+The public registry at [agentroot.io](https://agentroot.io) is a convenience for `search`, `health`, `manifests`, `collections`, and `submit`, not a dependency for the core protocol. `resolve`, `install`, `update`, and `uninstall` work even if the registry is offline because they go through DNS.
 
 ### Exit codes
 
@@ -530,7 +522,7 @@ The CLI reads the following environment variables (precedence: explicit flag > n
 |---|---|
 | `NO_COLOR=1` | Disable ANSI color ([no-color.org](https://no-color.org)) |
 | `FORCE_COLOR=0` | Disable ANSI color (Node convention) |
-| `CI=true` | Imply `--yes` and `--no-color` (no prompts, plain text — matches `gh`, `pnpm`, `biome`) |
+| `CI=true` | Imply `--yes` and `--no-color` (no prompts, plain text; matches `gh`, `pnpm`, `biome`) |
 | `AGENTROOT_YES=1` | Imply `--yes` (skip all confirmation prompts) |
 | `AGENTROOT_JSON=1` | Imply `--json` (machine-readable output) |
 | `AGENTROOT_NO_COLOR=1` | Imply `--no-color` (namespaced variant) |
@@ -577,7 +569,7 @@ Errors print one line to stderr (`error <msg>`) plus a one-line hint indented un
 }
 ```
 
-The `code` is one of the symbolic names in the [Exit codes](#exit-codes) table. Scripts can branch on either `$?` or `jq '.error.code'` — they always agree.
+The `code` is one of the symbolic names in the [Exit codes](#exit-codes) table. Scripts can branch on either `$?` or `jq '.error.code'`; they always agree.
 
 ## Documentation
 
@@ -609,10 +601,10 @@ tests/       vitest unit + integration tests
 
 Contributions are welcome: bug reports, fixes, documentation improvements, new commands, new flags, new tool integrations.
 
-- **Report a bug or request a feature**: open an issue. Use the [bug report](.github/ISSUE_TEMPLATE/bug_report.yml) or [feature request](.github/ISSUE_TEMPLATE/feature_request.yml) template. Issue templates auto-apply the `triage` label; a maintainer leaves a first-response comment within ~7 days.
-- **Ask a question**: open a [Discussion](https://github.com/d3-inc/agentroot/discussions) (once enabled). Discussions are best-effort with no SLA.
-- **Send a code change**: fork the repo, make a branch, push, open a PR against `main`. The full step-by-step (including how to keep your fork in sync, rebase before merge, and the PR checklist) is in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md).
-- **Reading the code**: [CLAUDE.md](CLAUDE.md) is the structural-conventions reference (file ordering, single-source-of-truth list, exit codes, streams). Worth a scan before your first non-trivial PR.
+- **Report a bug or request a feature**: use the [bug report](.github/ISSUE_TEMPLATE/bug_report.yml) or [feature request](.github/ISSUE_TEMPLATE/feature_request.yml) template. A maintainer leaves a first-response comment within ~7 days.
+- **Ask a question**: open a [Discussion](https://github.com/d3-inc/agentroot/discussions) (once enabled). Best-effort, no SLA.
+- **Send a code change**: fork, branch, push, open a PR against `main`. Full step-by-step (keeping your fork in sync, rebase before merge, PR checklist) in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md).
+- **Reading the code**: [CLAUDE.md](CLAUDE.md) covers structural conventions (file ordering, single-source-of-truth list, exit codes, streams).
 - **Find something to work on**: filter open issues by `good first issue` or `help wanted`.
 
 See [GOVERNANCE.md](GOVERNANCE.md) for how decisions are made and how new maintainers are added.

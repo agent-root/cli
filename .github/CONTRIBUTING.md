@@ -15,15 +15,13 @@ By participating, you agree to abide by the [Contributor Covenant](CODE_OF_CONDU
 
 ## File an issue before a non-trivial PR
 
-For anything beyond a small fix or documentation tweak, **open an issue or discussion first** so maintainers can confirm scope before you write code. This protects your time. A PR that gets closed because the change isn't wanted is a worse outcome for both sides than a short conversation up front.
+For anything beyond a small fix or documentation tweak, **open an issue or discussion first** so maintainers can confirm scope before you write code. A PR closed because the change isn't wanted is a worse outcome than a short conversation up front.
 
-Trivial PRs (typo fixes, small doc clarifications, single-line bug fixes with obvious correctness) do not need a prior issue.
-
-Non-trivial PRs that bypass this step may be asked to be split, narrowed, or rewritten before review begins.
+Trivial PRs (typo fixes, small doc clarifications, single-line bug fixes with obvious correctness) do not need a prior issue. Non-trivial PRs that skip this step may be asked to be split, narrowed, or rewritten before review begins.
 
 ## Development setup
 
-We use the standard **fork and pull-request** workflow that GitHub-hosted OSS projects follow. Nobody pushes directly to this repository's `main` branch; every change lands through a reviewed PR from a fork.
+Standard **fork and pull-request** workflow. Nobody pushes directly to this repository's `main`; every change lands through a reviewed PR from a fork.
 
 Prerequisites:
 
@@ -91,15 +89,15 @@ Tests live under `tests/` and mirror the `src/` tree. We use [vitest](https://vi
 
 ## Regenerating documentation screenshots
 
-The PNGs under `docs/screenshots/` are captured automatically from real CLI sessions. If you change a command's output and the screenshot in the README no longer matches:
+The PNGs under `docs/screenshots/` are captured from real CLI sessions. If you change a command's output and the screenshot in the README no longer matches:
 
 ```bash
 pnpm run screenshots
 ```
 
-This runs `scripts/capture-screenshots.mjs`. The script executes each command, converts the ANSI output to an HTML page styled like a macOS terminal, and uses Playwright headless Chromium to take the PNG. It self-contains its test fixtures and uses temp directories for install/uninstall.
+This runs `scripts/capture-screenshots.mjs`, which executes each command, converts ANSI output to an HTML page styled like a macOS terminal, and uses Playwright headless Chromium for the PNG. Fixtures are self-contained and temp directories are used for install/uninstall.
 
-You'll need Playwright's Chromium binary the first time (`pnpm exec playwright install chromium`). The recipe is in the script. Add or modify recipes there.
+First-time setup: `pnpm exec playwright install chromium`. Add or modify recipes inside the script.
 
 ## Branching and pull requests
 
@@ -159,17 +157,7 @@ The canonical repo's `main` branch is configured (by repo administrators) so tha
 - **Stale reviews are dismissed** when new commits are pushed to a PR.
 - **Force pushes to `main` are forbidden.**
 
-Maintainers verify these settings under **Settings → Branches → Branch protection rules** on the GitHub repo page. New maintainers do not need write access to `main` directly; the same fork-and-PR flow applies. A maintainer's elevated privilege is approving PRs and merging, not bypassing the rules.
-
-### Why this matters for publishing
-
-There is no automated publish pipeline today (see [Releasing](#releasing)), and the package has not been published to npm under this repo's control. But once we do publish:
-
-- The `agent-root` npm package will be public, so anyone can install it.
-- Nobody outside the maintainer team can push directly to this repo because of branch protection, so nobody outside the team can land code that ends up in a published tarball.
-- The publish step itself (when it is added) will run from a tagged commit on `main`, which by definition has been through review.
-
-This is the standard OSS pattern: open package, restricted-write repo, gated by PR review.
+Maintainers verify these settings under **Settings → Branches → Branch protection rules**. New maintainers do not need write access to `main` directly; the same fork-and-PR flow applies. A maintainer's elevated privilege is approving and merging PRs, not bypassing the rules.
 
 ## Commit conventions
 
@@ -197,20 +185,20 @@ This appends a `Signed-off-by: Your Name <your.email@example.com>` line.
 
 ## AI-assisted contributions
 
-We are pragmatic about AI tools. You are welcome to use them, and we have two rules.
+AI tools are welcome. Two rules:
 
-**No AI co-authorship.** Please do not add `Co-Authored-By:` trailers crediting Claude, Copilot, Cursor, ChatGPT, or any other AI assistant. The same applies to "Generated with..." footers in commit messages or PR descriptions. If you used AI tooling to draft a change, that is your choice as the author; the tool is not a co-author. The `Signed-off-by:` line from `git commit -s` should be the only trailer on the commit.
+**No AI co-authorship.** Do not add `Co-Authored-By:` trailers crediting Claude, Copilot, Cursor, ChatGPT, or any other AI assistant, and no "Generated with..." footers in commit messages or PR descriptions. The `Signed-off-by:` line from `git commit -s` should be the only trailer on the commit.
 
-**Soft disclosure expectation.** If a meaningful portion of the change was AI-assisted (drafted with an LLM, refactored by an agent, etc.), please mention it briefly in the PR description, e.g. _"Drafted with help from Claude; I reviewed every line before submitting."_ This is not a gate, just context for reviewers. We do not reject PRs for being AI-assisted; we may ask follow-up questions if the diff suggests the contributor did not read the code.
+**Soft disclosure.** If a meaningful portion of the change was AI-assisted, mention it in the PR description, e.g. _"Drafted with help from Claude; I reviewed every line before submitting."_ Not a gate, just context for reviewers.
 
-**You are still the author.** By signing off with DCO, you are certifying that the code is yours to submit under the project's license. That responsibility does not transfer to a model.
+By signing off with DCO, you certify the code is yours to submit under the project's license. That responsibility does not transfer to a model.
 
 ## Triage
 
-When you open an issue or PR, expect this:
+When you open an issue or PR:
 
 - The `triage` label is applied automatically by the issue template.
-- A maintainer will leave at least an acknowledgement comment within **~7 days** in most cases. We do not promise a fix in that window, only that you will not hear silence.
+- A maintainer leaves at least an acknowledgement comment within **~7 days** in most cases. That isn't a promise of a fix, only that you won't hear silence.
 - The maintainer replaces `triage` with one of these labels as the request settles:
 
   | Label              | Meaning                                                              |
@@ -254,27 +242,17 @@ When touching the codebase, please respect:
 
 ## Tests are required for new behavior
 
-Every PR that adds or changes runtime behavior **must include at least one test** that fails without the change and passes with it. This applies to:
+Every PR that adds or changes runtime behavior **must include at least one test** that fails without the change and passes with it. This applies to new commands or flags, new helper functions, bug fixes (regression test), and behavior changes in existing functions.
 
-- New commands or flags
-- New helper functions
-- Bug fixes (add a regression test)
-- Behavior changes in existing functions
+Tests live under `tests/` mirroring the source path (e.g., `src/lib/format.ts` → `tests/lib/format.test.ts`). Prefer pure-function tests; for I/O code, use `vi.mock()` to isolate the unit under test.
 
-The test should live under `tests/` mirroring the source path (e.g., `src/lib/format.ts` → `tests/lib/format.test.ts`). Prefer pure-function tests; for I/O code, use `vi.mock()` to isolate the unit under test.
-
-**Exempt from the test requirement:**
-
-- Documentation-only changes (`docs:` prefix)
-- Dependency bumps (`chore(deps):` prefix)
-- Build / CI / tooling changes that don't touch runtime code
-- Pure refactors that preserve behavior, but you must include the existing test run output in the PR description as evidence
+**Exempt:** documentation-only changes (`docs:` prefix), dependency bumps (`chore(deps):` prefix), build / CI / tooling changes that don't touch runtime code, and pure refactors that preserve behavior (include the existing test run output in the PR description as evidence).
 
 The test step runs in CI on every PR. PRs with failing tests cannot be merged.
 
 ### Patterns to follow
 
-Look at `tests/lib/format.test.ts` and `tests/commands/install-helpers.test.ts` for the shape we want:
+See `tests/lib/format.test.ts` and `tests/commands/install-helpers.test.ts` for the shape we want:
 
 - One `describe` block per public function
 - Test names read like sentences: `it('honors --tool flag and short-circuits detection')`
@@ -283,9 +261,7 @@ Look at `tests/lib/format.test.ts` and `tests/commands/install-helpers.test.ts` 
 
 ## Releasing
 
-There is **no automated release pipeline** at the moment. The repo intentionally ships no publish workflow until the release strategy (registry, signing, provenance, cadence) is decided. Maintainers cut releases manually when the package is ready to ship.
-
-The interim manual flow when we do publish:
+There is **no automated release pipeline** yet. The repo ships no publish workflow until the release strategy (registry, signing, provenance, cadence) is decided. The interim manual flow:
 
 1. Land all intended PRs in `main` via the normal review process.
 2. Promote `## [Unreleased]` in `CHANGELOG.md` to a new version + date.
@@ -300,6 +276,6 @@ When the publish pipeline is automated, this section moves to a dedicated `RELEA
 
 ## Getting help
 
-Stuck? Open a discussion or comment on your PR. Happy to walk through anything. The maintainer roster is in [MAINTAINERS.md](../MAINTAINERS.md).
+Stuck? Open a discussion or comment on your PR. The maintainer roster is in [MAINTAINERS.md](../MAINTAINERS.md).
 
 Thanks again for contributing.

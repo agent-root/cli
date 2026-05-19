@@ -1,12 +1,10 @@
 # Maintaining
 
-Operational reference for maintainers. Not contributor-facing; goes here so the steps can be replicated by any future maintainer.
+Operational reference for maintainers: what the repo admin does on GitHub and how to reproduce it via the CLI. For governance (roles, decisions, adding maintainers), see [GOVERNANCE.md](GOVERNANCE.md). For contributor workflow, see [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md).
 
-For governance (roles, decisions, adding maintainers), see [GOVERNANCE.md](GOVERNANCE.md). For contributor workflow, see [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md). This file is about **what the repo admin does on GitHub** and **how to reproduce it via the CLI**.
+## Repo settings
 
-## Repo settings (currently applied)
-
-These were set via `gh repo edit` on this repo. Re-apply with the same command if state ever drifts.
+Re-apply if state drifts:
 
 ```bash
 gh repo edit agent-root/agent-root-cli \
@@ -21,19 +19,17 @@ gh repo edit agent-root/agent-root-cli \
   --enable-projects=false
 ```
 
-What this gets you:
-
 | Setting | Value | Why |
 |---|---|---|
-| Merge: squash only | enabled | `CONTRIBUTING.md` documents squash as the default. Disabling merge-commit + rebase removes the dropdown and prevents accidental non-squash merges. |
-| Delete head branch on merge | on | Keeps branch list clean. Forks aren't affected; only this repo's branches. |
+| Merge: squash only | enabled | `CONTRIBUTING.md` documents squash as the default. Disabling merge-commit + rebase prevents accidental non-squash merges. |
+| Delete head branch on merge | on | Keeps branch list clean. Forks aren't affected. |
 | Allow update branch | on | Lets PR authors click "Update branch" to fast-forward without losing review state. |
 | Issues | on | Required for the bug-report and feature-request templates. |
-| Wiki | off | We host docs in-repo (`README.md`, `GOVERNANCE.md`, `MAINTAINERS.md`, `docs/`); a wiki creates a second source of truth. |
+| Wiki | off | Docs live in-repo (`README.md`, `GOVERNANCE.md`, `MAINTAINERS.md`, `docs/`). |
 | Discussions | off (for now) | When you flip this on, update [.github/SUPPORT.md](.github/SUPPORT.md) and [MAINTAINERS.md](MAINTAINERS.md) to remove "(once enabled)" notes. Run `gh repo edit agent-root/agent-root-cli --enable-discussions`. |
 | Projects | off | Not used at this size. |
 
-Verify current state any time:
+Verify current state:
 
 ```bash
 gh api /repos/agent-root/agent-root-cli \
@@ -42,19 +38,14 @@ gh api /repos/agent-root/agent-root-cli \
 
 ## Branch protection (BLOCKED until private repo upgrades or goes public)
 
-GitHub's free plan does **not** offer branch protection on private repos. The first time you try to set protection on `main` while private, the API returns:
+GitHub's free plan does not offer branch protection on private repos. Setting it on `main` while private returns:
 
 ```
 HTTP 403
 "Upgrade to GitHub Pro or make this repository public to enable this feature."
 ```
 
-Two ways to unlock:
-
-1. **Make the repo public.** Branch protection is free on public repos. This is the path most OSS projects take.
-2. **Upgrade the `agent-root` org to GitHub Team** (paid). Branch protection then works on private repos too.
-
-When either condition is met, run the script below to apply the full protection set. The CONTRIBUTING.md "Branch protection" section already documents the policy publicly; this is just the apply step.
+Unlock either by making the repo public (free) or upgrading the `agent-root` org to GitHub Team (paid). The policy contributors see is in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md#branch-protection); below is the apply step.
 
 ```bash
 # Run after the repo is public OR the org is on Team plan.
@@ -86,28 +77,15 @@ gh api -X PUT /repos/agent-root/agent-root-cli/branches/main/protection \
 rm /tmp/agent-root-cli-bp.json
 ```
 
-Verify with:
+Verify:
 
 ```bash
 gh api /repos/agent-root/agent-root-cli/branches/main/protection | jq .
 ```
 
-If the `Build / Type-check (Node 22)` context doesn't exist yet (CI hasn't run on `main` since the protection rule was set), GitHub will record the rule but not block until the first CI run completes. That is fine; the next push triggers CI and from then on the rule is enforced.
+If the `Build / Type-check (Node 22)` context doesn't exist yet (CI hasn't run on `main` since the rule was set), GitHub records the rule but doesn't block until the first CI run completes. The next push triggers CI and the rule is enforced from then on.
 
-### What the protection enforces
-
-This matches what [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md#branch-protection) tells contributors:
-
-- Direct pushes to `main` are blocked. Every change lands through a PR.
-- 1 approval required before merge.
-- Stale reviews dismissed when new commits push.
-- Code-owner review required where `.github/CODEOWNERS` applies.
-- CI status checks `Build / Type-check (Node 22)` and `(Node 24)` must pass.
-- Linear history required (squash or rebase only).
-- Force-push to `main` forbidden.
-- Branch deletion of `main` forbidden.
-- Conversation resolution required before merge.
-- `enforce_admins: false` lets admins bypass in true emergencies. Treat use of this as exceptional and document why.
+`enforce_admins: false` lets admins bypass in true emergencies. Treat any use of this as exceptional and document why.
 
 ## Adding collaborators
 
@@ -120,16 +98,16 @@ gh api -X PUT /repos/agent-root/agent-root-cli/collaborators/isingh    --field p
 
 Permissions: `pull`, `triage`, `push`, `maintain`, `admin`. `push` is the right level for a maintainer; `admin` is reserved for the repo owner.
 
-Once the org is on a paid plan, prefer adding maintainers to a GitHub team (`@agent-root/maintainers`) and granting the team push access. That makes CODEOWNERS rules cleaner (use `@agent-root/maintainers` instead of three individual handles).
+Once the org is on a paid plan, prefer adding maintainers to a GitHub team (`@agent-root/maintainers`) and granting the team push access. CODEOWNERS can then reference the team instead of individual handles.
 
 ## Workflows + CI
 
-Two workflows ship in this repo: `.github/workflows/ci.yml` (build, type-check, vitest, smoke) and `.github/workflows/codeql.yml` (security scan).
+Two workflows ship: `.github/workflows/ci.yml` (build, type-check, vitest, smoke) and `.github/workflows/codeql.yml` (security scan).
 
-- CodeQL is gated on `!github.event.repository.private`, so it auto-skips while the repo is private and turns on the moment it goes public. No action needed.
+- CodeQL is gated on `!github.event.repository.private`, so it auto-skips while the repo is private and turns on the moment it goes public.
 - `dependabot.yml` runs daily on npm + weekly on github-actions, grouped into a single minor-and-patch PR per ecosystem.
 
-To list runs / re-run a failed one:
+List or re-run jobs:
 
 ```bash
 gh run list --repo agent-root/agent-root-cli --limit 5
@@ -138,22 +116,19 @@ gh run rerun <run-id> --repo agent-root/agent-root-cli --failed
 
 ## Releasing
 
-There is no automated release pipeline yet (see [.github/CONTRIBUTING.md#releasing](.github/CONTRIBUTING.md#releasing)). The manual flow when ready:
+The contributor-facing process is in [.github/CONTRIBUTING.md#releasing](.github/CONTRIBUTING.md#releasing). The maintainer-only tag + publish steps, once the release PR has merged:
 
 ```bash
-# 1. Promote unreleased entries to a real version in CHANGELOG.md
-# 2. Bump version in package.json
-# 3. Open a release PR titled "chore(release): v0.X.Y", land it via review
-# 4. From the merge commit on main:
+# From the merge commit on main:
 git tag v0.X.Y -m "v0.X.Y"
 git push origin v0.X.Y
-# 5. Manual publish (no provenance / OIDC wiring yet):
+# Manual publish (no provenance / OIDC wiring yet):
 pnpm publish --access public
-# 6. Create a GitHub release pointing at the tag, with the CHANGELOG entry as the body:
+# Create a GitHub release pointing at the tag:
 gh release create v0.X.Y --notes-from-tag --repo agent-root/agent-root-cli
 ```
 
-When the publish flow is automated, this section moves to a dedicated `RELEASING.md` and the manual block above gets removed.
+When the publish flow is automated, this section moves to a dedicated `RELEASING.md`.
 
 ## Recovering from a bad push
 
@@ -170,9 +145,7 @@ If something lands on `main` that shouldn't have:
 
 ## History rewrite (one-time, done 2026-05-19)
 
-This repo's commits 1-47 were originally authored under `chota-bheem-codes <mrwt005@gmail.com>` (a personal account that happened to be in the local git config at commit time). GitHub attributed them to `mynk-s-rwt`, the personal GitHub account that owns that email.
-
-Rewritten to the correct identity `mayank-d3 <mayank.rawat@d3.com>` via:
+Commits 1-47 were originally authored under `chota-bheem-codes <mrwt005@gmail.com>` (a personal account in the local git config at commit time, attributed by GitHub to `mynk-s-rwt`). Rewritten to `mayank-d3 <mayank.rawat@d3.com>` via:
 
 ```bash
 git filter-branch -f \
@@ -192,7 +165,7 @@ git push --force-with-lease origin main
 git push --force origin v0
 ```
 
-The local git config in this repo's `.git/config` is now pinned to the right identity:
+The repo's `.git/config` is pinned to the correct identity so future commits don't need rewriting:
 
 ```ini
 [user]
@@ -200,7 +173,7 @@ The local git config in this repo's `.git/config` is now pinned to the right ide
   email = mayank.rawat@d3.com
 ```
 
-so future commits don't need rewriting. The `~/.gitconfig-d3` include is the canonical source for d3-repos identity; per-repo config in this checkout matches it.
+The `~/.gitconfig-d3` include is the canonical source for d3-repos identity; per-repo config in this checkout matches it.
 
 ## Quick reference
 

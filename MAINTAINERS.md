@@ -20,7 +20,7 @@ _None yet._
 
 ## Responsibilities
 
-Every maintainer is expected to:
+Maintainers are not on-call; the expectations below are guidelines, not SLAs.
 
 - **Triage** new issues and PRs within ~7 days of opening (at minimum, a label and an acknowledgement comment).
 - **Review** pull requests assigned by `.github/CODEOWNERS` or by ping in good faith and on a reasonable cadence.
@@ -28,15 +28,9 @@ Every maintainer is expected to:
 - **Respond to security reports** routed via [SECURITY.md](.github/SECURITY.md). Any maintainer can acknowledge; the responding maintainer coordinates the fix.
 - **Uphold the Code of Conduct** ([CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md)) and handle reports according to its enforcement ladder.
 
-Maintainers are not on-call. The expectations above are guidelines, not SLAs.
+## Becoming a maintainer, stepping back
 
-## Becoming a maintainer
-
-The full process is in [GOVERNANCE.md#adding-a-new-maintainer](GOVERNANCE.md#adding-a-new-maintainer). In short: ~5 merged PRs over a few months + consistent review quality + nomination by an existing maintainer + 7-day lazy-consensus window.
-
-## Stepping back
-
-Voluntary step-back is a one-line PR moving your entry to **Emeritus maintainers** above. Inactivity-triggered step-back (12 months silent + 30-day check-in window) is described in [GOVERNANCE.md#stepping-back-emeritus-and-removal](GOVERNANCE.md#stepping-back-emeritus-and-removal).
+See [GOVERNANCE.md#adding-a-new-maintainer](GOVERNANCE.md#adding-a-new-maintainer) and [GOVERNANCE.md#stepping-back-emeritus-and-removal](GOVERNANCE.md#stepping-back-emeritus-and-removal).
 
 ## Reaching maintainers
 

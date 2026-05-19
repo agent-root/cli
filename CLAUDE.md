@@ -1,6 +1,6 @@
 # agent-root CLI: Project Conventions
 
-The CLI client for the AgentRoot protocol. Standalone, MIT-licensed. **No publish pipeline yet** — release strategy (registry, signing, provenance, cadence) is still being decided; do not add a release workflow, a `prepublishOnly` hook, or any other publish-adjacent automation without explicit sign-off.
+The CLI client for the AgentRoot protocol. Standalone, MIT-licensed. **No publish pipeline yet**: release strategy (registry, signing, provenance, cadence) is still being decided. Do not add a release workflow, a `prepublishOnly` hook, or any other publish-adjacent automation without explicit sign-off.
 
 ## Project layout
 
@@ -79,9 +79,9 @@ returns zero rows. `--json` now returns the full envelope
 
 **Commits are authored by the human who wrote them.** Do NOT add `Co-Authored-By:` trailers for Claude, Copilot, Cursor, ChatGPT, or any other AI assistant. Do NOT add "🤖 Generated with..." footers. The developer or contributor sending the PR is the sole author; AI tooling that helped is not co-credited. This applies to every commit and every PR, no exceptions. (DCO sign-off via `git commit -s` is still required and adds only the contributor's own `Signed-off-by:` line.)
 
-**Exit codes are sysexits.** Every `fatal()` call must pass an `EXIT.*` constant from `src/cli/exit-codes.ts` (which is the single source of truth: `OK=0`, `GENERIC=1`, `USAGE=2`, `NOINPUT=66`, `NOHOST=68`, `UNAVAILABLE=69`, `PROTOCOL=76`, `NOPERM=77`, `CONFIG=78`). The default is `GENERIC` (1) — pick the more specific code if it applies. JSON errors put the symbolic name in `error.code` via `exitCodeName()`. Document new exit codes in per-command help pages **and** in the README's "Exit codes" table.
+**Exit codes are sysexits.** Every `fatal()` call must pass an `EXIT.*` constant from `src/cli/exit-codes.ts` (the single source of truth: `OK=0`, `GENERIC=1`, `USAGE=2`, `NOINPUT=66`, `NOHOST=68`, `UNAVAILABLE=69`, `PROTOCOL=76`, `NOPERM=77`, `CONFIG=78`). The default is `GENERIC` (1); pick the more specific code if it applies. JSON errors put the symbolic name in `error.code` via `exitCodeName()`. Document new exit codes in per-command help pages **and** in the README's "Exit codes" table.
 
-**Streams: stdout is data, stderr is conversation.** Spinners, comments, progress notes, prompts all go to stderr. Only pipeable output (results tables, JSON envelopes) goes to stdout. `cmd --json | jq` must work without `2>/dev/null`. Use `note()` / `comment()` from `src/cli/streams.ts` for any non-data line — never raw `console.log` for chatter.
+**Streams: stdout is data, stderr is conversation.** Spinners, comments, progress notes, prompts all go to stderr. Only pipeable output (results tables, JSON envelopes) goes to stdout. `cmd --json | jq` must work without `2>/dev/null`. Use `note()` / `comment()` from `src/cli/streams.ts` for any non-data line; never raw `console.log` for chatter.
 
 ## Tests
 
