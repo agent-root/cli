@@ -2,7 +2,9 @@ import pc from 'picocolors';
 import { validateManifest, parseAllTxt, getHandler, type ParsedRecord } from '@agent-root/core';
 import { fetchJSON } from '../lib/fetch';
 import { dnsLookupTxt, resolveAgentroot } from '../lib/dns';
-import { fatal, maybeSpinner, formatRecord } from '../lib/format';
+import { fatal } from '../cli/fatal';
+import { maybeSpinner } from '../cli/spinner';
+import { formatRecord } from '../utils/format-record';
 import { installSkill } from './install-helpers';
 import type { JsonOut } from './install';
 

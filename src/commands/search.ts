@@ -1,7 +1,10 @@
 import pc from 'picocolors';
 import { fetchJSON } from '../lib/fetch';
 import { getApiBase } from '../lib/config';
-import { fatal, maybeSpinner, confirmAction, RECORD_TYPES } from '../lib/format';
+import { fatal } from '../cli/fatal';
+import { maybeSpinner } from '../cli/spinner';
+import { confirmAction } from '../cli/confirm';
+import { RECORD_TYPES } from '../constants/record-types';
 
 export interface SearchResult {
   domain: string;

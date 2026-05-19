@@ -6,7 +6,8 @@ import {
   hashContent, readInstalledState, upsertInstalled, type InstalledEntry,
 } from '@agent-root/core';
 import { fetch } from '../lib/fetch';
-import { fatal, maybeSpinner } from '../lib/format';
+import { fatal } from '../cli/fatal';
+import { maybeSpinner } from '../cli/spinner';
 
 export async function cmdUpdate(positional: string[], flags: Record<string, unknown>): Promise<void> {
   const state = readInstalledState();

@@ -8,7 +8,8 @@ import { cmdUninstall } from './commands/uninstall';
 import { cmdInit } from './commands/init';
 import { cmdValidate } from './commands/validate';
 import { cmdConfig } from './commands/config';
-import { parseArgs, fatal } from './lib/format';
+import { parseArgs } from './cli/parse-args';
+import { fatal } from './cli/fatal';
 
 export function showHelp(): void {
   console.log(`

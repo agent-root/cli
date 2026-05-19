@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import pc from 'picocolors';
 import { MANIFEST_PATH } from '@agent-root/core';
-import { fatal } from '../lib/format';
+import { fatal } from '../cli/fatal';
 import { getApiBase } from '../lib/config';
 
 export async function cmdInit(positional: string[], flags: Record<string, unknown>): Promise<void> {

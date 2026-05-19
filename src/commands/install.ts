@@ -2,7 +2,9 @@ import pc from 'picocolors';
 import { fetchJSON } from '../lib/fetch';
 import { getApiBase } from '../lib/config';
 import { resolveAgentroot } from '../lib/dns';
-import { fatal, maybeSpinner, RECORD_TYPES } from '../lib/format';
+import { fatal } from '../cli/fatal';
+import { maybeSpinner } from '../cli/spinner';
+import { RECORD_TYPES } from '../constants/record-types';
 import { searchWithFallback, selectResult, promptSearch, type SearchResult } from './search';
 import { installSkill } from './install-helpers';
 

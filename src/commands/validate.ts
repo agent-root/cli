@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import pc from 'picocolors';
 import { validateManifest, MANIFEST_PATH } from '@agent-root/core';
-import { fatal, RECORD_TYPES } from '../lib/format';
+import { fatal } from '../cli/fatal';
+import { RECORD_TYPES } from '../constants/record-types';
 
 export async function cmdValidate(positional: string[], _flags: Record<string, unknown>): Promise<void> {
   const filePath = positional[0] || MANIFEST_PATH;

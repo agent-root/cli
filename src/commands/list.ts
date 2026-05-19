@@ -1,7 +1,7 @@
 import os from 'node:os';
 import pc from 'picocolors';
 import { readInstalledState } from '@agent-root/core';
-import { RECORD_TYPES } from '../lib/format';
+import { RECORD_TYPES } from '../constants/record-types';
 
 export async function cmdList(_positional: string[], flags: Record<string, unknown>): Promise<void> {
   // readInstalledState reads the canonical ~/.agentroot/installed.json and

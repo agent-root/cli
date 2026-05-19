@@ -9,7 +9,8 @@ import {
 } from '@agent-root/core';
 import { fetch, fetchJSON } from '../lib/fetch';
 import { getApiBase } from '../lib/config';
-import { fatal, maybeSpinner } from '../lib/format';
+import { fatal } from '../cli/fatal';
+import { maybeSpinner } from '../cli/spinner';
 import type { SkillMeta, JsonOut } from './install';
 
 export function ensureCanonicalStore(domain: string, recordId: string): string {
@@ -243,8 +244,9 @@ export interface InstallSkillOptions {
  * Phase 1 of installSkill — decide which AI tools to install for.
  * Honors --tool flag, then _selectedTools (from interactive picker),
  * else falls back to detecting installed tools, else cross-tool default.
+ * Exported for unit testing.
  */
-function detectTargetTools(flags: Record<string, unknown>): string[] {
+export function detectTargetTools(flags: Record<string, unknown>): string[] {
   const selected = flags['_selectedTools'] as string[] | undefined;
   if (selected && selected.length > 0) return selected;
   if (flags['tool']) return [flags['tool'] as string];

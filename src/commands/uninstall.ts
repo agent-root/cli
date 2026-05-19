@@ -3,7 +3,9 @@ import path from 'node:path';
 import os from 'node:os';
 import pc from 'picocolors';
 import { readInstalledState, removeInstalledState } from '@agent-root/core';
-import { fatal, confirmAction, RECORD_TYPES } from '../lib/format';
+import { fatal } from '../cli/fatal';
+import { confirmAction } from '../cli/confirm';
+import { RECORD_TYPES } from '../constants/record-types';
 
 export async function cmdUninstall(positional: string[], flags: Record<string, unknown>): Promise<void> {
   const state = readInstalledState();
