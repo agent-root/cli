@@ -116,7 +116,10 @@ REGISTRY
   health                            Probe the registry API
   manifests [--query <q>]           List registered manifests (paginated)
   collections [<slug>]              Browse curated collections
+
+TOOLING
   version                           Print version + runtime + config info
+  completion <shell>                Print shell completion (bash, zsh, fish, pwsh)
 
 OPTIONS
   --help, -h         Show this help
@@ -143,6 +146,14 @@ Flag names accept both kebab-case (`--manifest-url`) and camelCase (`--manifestU
 All spinners, progress notes, and chatter go to **stderr**. Data and JSON output go to **stdout**. That means `agent-root <cmd> --json | jq .` works without `2>/dev/null` — pipes never carry color codes or progress lines.
 
 Run `agent-root <command> --help` for a per-command page covering just that command's flags, examples, and the exact [exit codes](#exit-codes) it can return. For example, `agent-root resolve --help` documents `--no-install`; `agent-root search --help` documents `--type` / `--page` / `--limit`.
+
+If you typo a command, the CLI suggests the closest match:
+
+```text
+$ agent-root reslove doma.xyz
+error Unknown command: reslove
+       Did you mean: agentroot resolve?
+```
 
 ### Version & environment
 
@@ -540,6 +551,45 @@ The CLI reads the following environment variables (precedence: explicit flag > n
 Explicit flags always win. For example, `CI=true agent-root install foo --no-yes` still prompts, because `--no-yes` was typed.
 
 No API key is required. The endpoints the CLI calls are public-read (`/api/records`, `/api/manifests`, `/api/manifests/{domain}`, `/api/find-skills`, `/api/stats`, `/api/health`, `/api/collections`, `/api/collections/{slug}`) plus one public-write (`/api/submit`, which the registry verifies via DNS before indexing).
+
+### Shell completion
+
+`agent-root completion <shell>` prints a completion script to stdout. Redirect it to the location your shell loads on startup:
+
+```bash
+# bash
+agent-root completion bash > /usr/local/etc/bash_completion.d/agent-root
+# or source it on every shell start:
+echo 'source <(agent-root completion bash)' >> ~/.bashrc
+
+# zsh
+agent-root completion zsh > "${fpath[1]}/_agent-root"
+# then reload with `compinit` (restarting the shell also works)
+
+# fish
+agent-root completion fish > ~/.config/fish/completions/agent-root.fish
+
+# PowerShell
+agent-root completion pwsh > $PROFILE.CurrentUserAllHosts/agent-root.ps1
+```
+
+Completes top-level commands, top-level flags, and value enums for `--tool` (claude, cursor, codex, gemini, agents), `--type` (agent, mcp, skill, a2a, payment), and the `completion` subcommand's shell argument.
+
+### Errors and JSON error shape
+
+Errors print one line to stderr (`error <msg>`) plus a one-line hint indented underneath. In `--json` mode the same data is emitted as a single envelope on stdout so the same pipeline can grab it without redirecting stderr:
+
+```json
+{
+  "error": {
+    "code": "NOHOST",
+    "message": "No _agentroot.example.test TXT record found",
+    "hint": "Try: agentroot search example"
+  }
+}
+```
+
+The `code` is one of the symbolic names in the [Exit codes](#exit-codes) table. Scripts can branch on either `$?` or `jq '.error.code'` — they always agree.
 
 ## Documentation
 
