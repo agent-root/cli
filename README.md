@@ -115,24 +115,44 @@ REGISTRY
   health                            Probe the registry API
   manifests [--query <q>]           List registered manifests (paginated)
   collections [<slug>]              Browse curated collections
+  version                           Print version + runtime + config info
 
 OPTIONS
-  --tool <name>    Target tool: claude, codex, gemini, cursor, agents
-  --type <type>    Filter by record type: agent, mcp, skill, a2a, payment
-  --project        Install to project directory (not global)
-  --all            Install all records (or fetch every search/manifests page)
-  --page <N>       Page number for search/manifests (1-indexed, default 1)
-  --limit <N>      Per-page limit (1..100, default 20)
-  --json           Output as JSON
-  --domain <name>  Domain name for init template
-  --query <q>      Free-text filter for manifests
-  --manifest-url   Explicit manifest URL for submit
-  --yes            Auto-confirm all prompts (for CI/scripts)
-  --force          Overwrite existing files
-  --no-install     Skip auto-install when resolving skill= records
+  --help, -h         Show this help
+  --version, -v      Print CLI version (one line)
+  --tool <name>      Target tool: claude, codex, gemini, cursor, agents
+  --type <type>      Filter by record type: agent, mcp, skill, a2a, payment
+  --project          Install to project directory (not global)
+  --all              Install all records (or fetch every search/manifests page)
+  --page <N>         Page number for search/manifests (1-indexed, default 1)
+  --limit <N>        Per-page limit (1..100, default 20)
+  --json, -j         Output as JSON
+  --domain <name>    Domain name for init template
+  --query <q>        Free-text filter for manifests
+  --manifest-url     Explicit manifest URL for submit
+  --yes, -y          Auto-confirm all prompts (for CI/scripts)
+  --force, -f        Overwrite existing files
+  --quiet, -q        Suppress non-essential output
+  --no-install       Skip auto-install when resolving skill= records
 ```
 
+Flag names accept both kebab-case (`--manifest-url`) and camelCase (`--manifestUrl`). Use `--key=value` or `--key value`. Pass `--` to stop option parsing (any subsequent token is positional, even if it starts with `--`).
+
 Run `agent-root <command> --help` for command-specific flags.
+
+### Version & environment
+
+For bug reports, paste the output of `agent-root version`:
+
+```text
+agent-root 0.2.0
+node v22.14.0
+os   darwin/arm64
+api  https://www.agentroot.io
+config /Users/you/.agentroot/config.json
+```
+
+`agent-root --version` (or `-v`) prints just the version on one line, matching the `node --version` / `npm --version` convention.
 
 ## Usage
 

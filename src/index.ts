@@ -45,21 +45,28 @@ ${pc.bold('REGISTRY')}
   ${pc.cyan('health')}                             Probe the registry API
   ${pc.cyan('manifests')} [--query <q>]            List registered manifests
   ${pc.cyan('collections')} [<slug>]               Browse curated collections
+  ${pc.cyan('version')}                            Print version + runtime + config info
 
 ${pc.bold('OPTIONS')}
-  --tool <name>    Target tool: claude, codex, gemini, cursor, agents
-  --type <type>    Filter by record type: agent, mcp, skill, a2a, payment
-  --project        Install to project directory (not global)
-  --all            Install all records (or fetch every search/manifests page)
-  --page <N>       Page number for search/manifests (1-indexed, default 1)
-  --limit <N>      Per-page limit (1..100, default 20)
-  --json           Output as JSON
-  --domain <name>  Domain name for init template
-  --query <q>      Free-text filter for manifests
-  --manifest-url   Explicit manifest URL for submit
-  --yes            Auto-confirm all prompts (for CI/scripts)
-  --force          Overwrite existing files
-  --no-install     Skip auto-install when resolving skill= records
+  --help, -h         Show this help
+  --version, -v      Print CLI version (one line)
+  --tool <name>      Target tool: claude, codex, gemini, cursor, agents
+  --type <type>      Filter by record type: agent, mcp, skill, a2a, payment
+  --project          Install to project directory (not global)
+  --all              Install all records (or fetch every search/manifests page)
+  --page <N>         Page number for search/manifests (1-indexed, default 1)
+  --limit <N>        Per-page limit (1..100, default 20)
+  --json, -j         Output as JSON
+  --domain <name>    Domain name for init template
+  --query <q>        Free-text filter for manifests
+  --manifest-url     Explicit manifest URL for submit
+  --yes, -y          Auto-confirm all prompts (for CI/scripts)
+  --force, -f        Overwrite existing files
+  --quiet, -q        Suppress non-essential output
+  --no-install       Skip auto-install when resolving skill= records
+
+  Flag names accept both kebab-case (--manifest-url) and camelCase (--manifestUrl).
+  Use --key=value or --key value. Use -- to end option parsing.
 
 ${pc.bold('EXAMPLES')}
   ${pc.dim('# Resolve a domain\'s capabilities directly via DNS')}
@@ -82,6 +89,9 @@ ${pc.bold('EXAMPLES')}
   npx agent-root stats
   npx agent-root manifests --query doma
   npx agent-root collections featured-domains
+
+  ${pc.dim('# Bug report? Paste this first.')}
+  npx agent-root version
 
 ${pc.bold('PROTOCOL')}
   AgentRoot resolves AI capabilities via DNS TXT records + JSON manifests.
