@@ -3,7 +3,7 @@ import path from 'node:path';
 import pc from 'picocolors';
 import { MANIFEST_PATH } from '@agent-root/core';
 import { fatal } from '../cli/fatal';
-import { getApiBase } from '../lib/config';
+import { getApiBase } from '../services/config/config-service';
 
 export async function cmdInit(positional: string[], flags: Record<string, unknown>): Promise<void> {
   const outputPath = positional[0] || MANIFEST_PATH;

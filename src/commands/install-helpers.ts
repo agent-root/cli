@@ -7,8 +7,8 @@ import {
   detectTools, resolveToolDir, hashContent, writeSkill, parseSupportingFiles,
   upsertInstalled, type InstalledToolEntry,
 } from '@agent-root/core';
-import { fetch, fetchJSON } from '../lib/fetch';
-import { getApiBase } from '../lib/config';
+import { fetch, fetchJSON } from '../services/http/fetch';
+import { getApiBase } from '../services/config/config-service';
 import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
 import type { SkillMeta, JsonOut } from './install';

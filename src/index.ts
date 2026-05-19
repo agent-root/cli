@@ -85,7 +85,7 @@ export async function main(): Promise<void> {
   }
 
   // Install default skills on first run (non-blocking, silent on failure)
-  const { ensureDefaults } = await import('./lib/defaults.js');
+  const { ensureDefaults } = await import('./services/config/defaults.js');
   await ensureDefaults(flags);
 
   try {

@@ -1,7 +1,7 @@
 import pc from 'picocolors';
-import { fetchJSON } from '../lib/fetch';
-import { getApiBase } from '../lib/config';
-import { resolveAgentroot } from '../lib/dns';
+import { fetchJSON } from '../services/http/fetch';
+import { getApiBase } from '../services/config/config-service';
+import { resolveAgentroot } from '../services/dns/dns-service';
 import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
 import { RECORD_TYPES } from '../constants/record-types';

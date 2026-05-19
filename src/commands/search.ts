@@ -1,6 +1,6 @@
 import pc from 'picocolors';
-import { fetchJSON } from '../lib/fetch';
-import { getApiBase } from '../lib/config';
+import { fetchJSON } from '../services/http/fetch';
+import { getApiBase } from '../services/config/config-service';
 import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
 import { confirmAction } from '../cli/confirm';

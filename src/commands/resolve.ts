@@ -1,7 +1,7 @@
 import pc from 'picocolors';
 import { validateManifest, parseAllTxt, getHandler, type ParsedRecord } from '@agent-root/core';
-import { fetchJSON } from '../lib/fetch';
-import { dnsLookupTxt, resolveAgentroot } from '../lib/dns';
+import { fetchJSON } from '../services/http/fetch';
+import { dnsLookupTxt, resolveAgentroot } from '../services/dns/dns-service';
 import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
 import { formatRecord } from '../utils/format-record';

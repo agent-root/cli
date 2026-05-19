@@ -5,7 +5,7 @@ import pc from 'picocolors';
 import {
   hashContent, readInstalledState, upsertInstalled, type InstalledEntry,
 } from '@agent-root/core';
-import { fetch } from '../lib/fetch';
+import { fetch } from '../services/http/fetch';
 import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
 

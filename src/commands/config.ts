@@ -1,6 +1,6 @@
 import pc from 'picocolors';
 import { API_BASE } from '@agent-root/core';
-import { loadConfig, saveConfig, CONFIG_PATH } from '../lib/config';
+import { loadConfig, saveConfig, CONFIG_PATH } from '../services/config/config-service';
 import { fatal } from '../cli/fatal';
 
 export async function cmdConfig(positional: string[], _flags: Record<string, unknown>): Promise<void> {
