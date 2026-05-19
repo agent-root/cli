@@ -25,8 +25,8 @@ Every maintainer is expected to:
 - **Triage** new issues and PRs within ~7 days of opening (at minimum, a label and an acknowledgement comment).
 - **Review** pull requests assigned by `.github/CODEOWNERS` or by ping in good faith and on a reasonable cadence.
 - **Cut releases** when the release process is in place (any maintainer can cut a patch / minor release; major releases require lazy consensus per [GOVERNANCE.md](GOVERNANCE.md#release-authority)).
-- **Respond to security reports** routed via [SECURITY.md](SECURITY.md). Any maintainer can acknowledge; the responding maintainer coordinates the fix.
-- **Uphold the Code of Conduct** ([CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)) and handle reports according to its enforcement ladder.
+- **Respond to security reports** routed via [SECURITY.md](.github/SECURITY.md). Any maintainer can acknowledge; the responding maintainer coordinates the fix.
+- **Uphold the Code of Conduct** ([CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md)) and handle reports according to its enforcement ladder.
 
 Maintainers are not on-call. The expectations above are guidelines, not SLAs.
 
@@ -42,4 +42,4 @@ Voluntary step-back is a one-line PR moving your entry to **Emeritus maintainers
 
 - For project questions, open a [Discussion](https://github.com/d3-inc/agentroot/discussions) (once enabled).
 - For Code of Conduct concerns, email **mayank@d3.com**.
-- For security issues, see [SECURITY.md](SECURITY.md). Do not file a public issue.
+- For security issues, see [SECURITY.md](.github/SECURITY.md). Do not file a public issue.

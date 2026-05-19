@@ -294,12 +294,12 @@ The interim manual flow when we do publish:
 5. After merge, tag the release commit locally (`git tag v0.X.Y -m "v0.X.Y"`) and push the tag.
 6. From the tagged commit, run `pnpm publish --access public` (provenance and 2FA are added once we decide on the publish identity).
 
-Release authority is documented in [GOVERNANCE.md#release-authority](GOVERNANCE.md#release-authority): any maintainer can cut a patch / minor release; major releases require lazy consensus.
+Release authority is documented in [GOVERNANCE.md#release-authority](../GOVERNANCE.md#release-authority): any maintainer can cut a patch / minor release; major releases require lazy consensus.
 
 When the publish pipeline is automated, this section moves to a dedicated `RELEASING.md`.
 
 ## Getting help
 
-Stuck? Open a discussion or comment on your PR. Happy to walk through anything. The maintainer roster is in [MAINTAINERS.md](MAINTAINERS.md).
+Stuck? Open a discussion or comment on your PR. Happy to walk through anything. The maintainer roster is in [MAINTAINERS.md](../MAINTAINERS.md).
 
 Thanks again for contributing.

@@ -582,15 +582,15 @@ The `code` is one of the symbolic names in the [Exit codes](#exit-codes) table. 
 ## Documentation
 
 - **Protocol specification**: [agentroot.io/docs/protocol](https://agentroot.io/docs/protocol)
-- **Contributing guide**: [CONTRIBUTING.md](CONTRIBUTING.md)
-- **Security policy**: [SECURITY.md](SECURITY.md)
-- **Support channels**: [SUPPORT.md](SUPPORT.md)
+- **Contributing guide**: [CONTRIBUTING.md](.github/CONTRIBUTING.md)
+- **Security policy**: [SECURITY.md](.github/SECURITY.md)
+- **Support channels**: [SUPPORT.md](.github/SUPPORT.md)
 - **Maintainers**: [MAINTAINERS.md](MAINTAINERS.md)
-- **Testing recipe**: [TESTING.md](TESTING.md)
+- **Testing recipe**: [TESTING.md](docs/TESTING.md)
 
 ## Contributing
 
-Contributions are welcome: bug reports, fixes, documentation improvements, new commands, new flags, new tool integrations. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup, test workflow, and PR checklist.
+Contributions are welcome: bug reports, fixes, documentation improvements, new commands, new flags, new tool integrations. See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the development setup, test workflow, and PR checklist.
 
 ## License
 

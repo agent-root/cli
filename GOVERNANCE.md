@@ -15,7 +15,7 @@ A maintainer can:
 - Approve and merge pull requests (subject to branch protection rules).
 - Triage issues, apply labels, close stale or out-of-scope reports.
 - Cut releases when the release process is in place.
-- Respond to security reports (per [SECURITY.md](SECURITY.md)).
+- Respond to security reports (per [SECURITY.md](.github/SECURITY.md)).
 - Vote in lazy-consensus decisions (see Decision-making below).
 
 Every maintainer is listed in [MAINTAINERS.md](MAINTAINERS.md) and in [.github/CODEOWNERS](.github/CODEOWNERS).
@@ -85,15 +85,15 @@ Maintainers should disclose conflicts of interest when reviewing PRs (employer r
 
 ## Code of Conduct enforcement
 
-CoC reports go to the contact in [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), not to the issue tracker. The enforcement ladder (Correction → Warning → Temporary Ban → Permanent Ban) is documented there. The maintainer who receives the report leads the response unless they are personally involved, in which case the project lead takes over; if the project lead is involved, the remaining maintainers take over.
+CoC reports go to the contact in [CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md), not to the issue tracker. The enforcement ladder (Correction → Warning → Temporary Ban → Permanent Ban) is documented there. The maintainer who receives the report leads the response unless they are personally involved, in which case the project lead takes over; if the project lead is involved, the remaining maintainers take over.
 
 ## Security incidents
 
-Security incident response is documented in [SECURITY.md](SECURITY.md). Any maintainer can acknowledge a private report; the responding maintainer coordinates the fix and disclosure with the rest of the team.
+Security incident response is documented in [SECURITY.md](.github/SECURITY.md). Any maintainer can acknowledge a private report; the responding maintainer coordinates the fix and disclosure with the rest of the team.
 
 ## Release authority
 
-While there is no automated release pipeline today (see [CONTRIBUTING.md#releasing](CONTRIBUTING.md#releasing)), once we publish, **any maintainer can cut a release** of the form patch / minor. Major-version releases (1.0, 2.0, …) require lazy consensus of all maintainers in the same way significant changes do.
+While there is no automated release pipeline today (see [CONTRIBUTING.md#releasing](.github/CONTRIBUTING.md#releasing)), once we publish, **any maintainer can cut a release** of the form patch / minor. Major-version releases (1.0, 2.0, …) require lazy consensus of all maintainers in the same way significant changes do.
 
 ## Changing this document
 
