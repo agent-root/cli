@@ -8,6 +8,15 @@ The CLI client for the AgentRoot protocol. Standalone, MIT-licensed, npm-publish
 src/
   index.ts                  Entry point: parseArgs + command router
   cli/                      Argument parsing, fatal exits, spinners, prompts
+    parse-args.ts           POSIX argv parser (kebab/camel, --key=value, --, --no-X)
+    fatal.ts                Single error sink with JSON envelope + sysexits codes
+    exit-codes.ts           Sysexits-style EXIT constants + exitCodeName()
+    colors.ts               picocolors wrapper, honors NO_COLOR + --no-color + TTY
+    streams.ts              stderr-routing helpers (note, comment) + --quiet wiring
+    env-preamble.ts         Mutates process.env before picocolors initialises
+    spinner.ts              nanospinner wrapper that respects quiet + non-TTY
+    suggest.ts              Levenshtein "Did you mean?" for unknown commands
+    confirm.ts              Inquirer-backed yes/no with --yes / CI auto-confirm
   commands/                 One file per CLI command (thin handlers only)
     resolve.ts              DNS lookup -> manifest fetch -> records
     search.ts               /api/records (primary) + legacy fallbacks
@@ -23,6 +32,9 @@ src/
     manifests.ts            /api/manifests paginated browser
     collections.ts          /api/collections list + detail
     submit.ts               POST /api/submit + DNS probe + TXT instructions
+    version.ts              version subcommand + printShortVersion()
+    completion.ts           Static bash/zsh/fish/pwsh completion scripts
+    help.ts                 Per-command help pages (15 commands + helpCompletion in completion.ts)
   constants/                Module-level lookup tables (RECORD_TYPES, etc.)
   services/                 Stateful work, grouped by concern
     config/                 ~/.agentroot/config.json read/write
@@ -65,6 +77,10 @@ returns zero rows. `--json` now returns the full envelope
 **Document every empty `catch {}`** with a 2 or 3 line comment explaining what condition is being swallowed and why that's the right behavior.
 
 **Behavior parity with the monorepo CLI.** The standalone is a 1:1 functional copy of `packages/cli/` from `d3-inc/agentroot`. Output must match byte-for-byte (modulo timestamps).
+
+**Exit codes are sysexits.** Every `fatal()` call must pass an `EXIT.*` constant from `src/cli/exit-codes.ts` (which is the single source of truth: `OK=0`, `GENERIC=1`, `USAGE=2`, `NOINPUT=66`, `NOHOST=68`, `UNAVAILABLE=69`, `PROTOCOL=76`, `NOPERM=77`, `CONFIG=78`). The default is `GENERIC` (1) — pick the more specific code if it applies. JSON errors put the symbolic name in `error.code` via `exitCodeName()`. Document new exit codes in per-command help pages **and** in the README's "Exit codes" table.
+
+**Streams: stdout is data, stderr is conversation.** Spinners, comments, progress notes, prompts all go to stderr. Only pipeable output (results tables, JSON envelopes) goes to stdout. `cmd --json | jq` must work without `2>/dev/null`. Use `note()` / `comment()` from `src/cli/streams.ts` for any non-data line — never raw `console.log` for chatter.
 
 ## Tests
 
