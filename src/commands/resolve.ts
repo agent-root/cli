@@ -1,4 +1,4 @@
-import pc from 'picocolors';
+import { colors } from '../cli/colors';
 import { validateManifest, parseAllTxt, getHandler, type ParsedRecord } from '@agent-root/core';
 import { fetchJSON } from '../services/http/fetch';
 import { resolveAgentroot } from '../services/dns/dns-service';
@@ -63,10 +63,10 @@ async function maybeAutoInstallSkill(
     return;
   }
 
-  installSpinner.success({ text: `Installed ${pc.bold(skillId)} (${jsonOut.installed.length} tool(s))` });
+  installSpinner.success({ text: `Installed ${colors.bold(skillId)} (${jsonOut.installed.length} tool(s))` });
   if (!flags.json) {
     for (const i of jsonOut.installed as Array<Record<string, string>>) {
-      console.log(`  ${pc.green('linked')} ${pc.bold(skillId)} → ${i.path} (${i.link_type})`);
+      console.log(`  ${colors.green('linked')} ${colors.bold(skillId)} → ${i.path} (${i.link_type})`);
     }
   }
 }
@@ -89,7 +89,7 @@ async function handleManifestMode(domain: string, manifestUrl: string, recordId:
 
   const { valid, errors } = validateManifest(manifest, domain);
   if (!valid) {
-    console.log(`${pc.yellow('warning')} Manifest has validation issues:`);
+    console.log(`${colors.yellow('warning')} Manifest has validation issues:`);
     for (const e of errors) console.log(`  - ${e}`);
     console.log();
   }
@@ -99,7 +99,7 @@ async function handleManifestMode(domain: string, manifestUrl: string, recordId:
     return;
   }
 
-  console.log(`${pc.bold(manifest.domain as string)}: ${records.length} record(s)\n`);
+  console.log(`${colors.bold(manifest.domain as string)}: ${records.length} record(s)\n`);
 
   const filtered = recordId ? records.filter(r => r.id === recordId) : records;
   if (recordId && filtered.length === 0) {
@@ -113,7 +113,7 @@ async function handleManifestMode(domain: string, manifestUrl: string, recordId:
 
   const subdomains = manifest.subdomains as string[] | undefined;
   if (subdomains && subdomains.length > 0) {
-    console.log(`${pc.dim(`Subdomains: ${subdomains.join(', ')}`)}\n`);
+    console.log(`${colors.dim(`Subdomains: ${subdomains.join(', ')}`)}\n`);
   }
 }
 
@@ -131,10 +131,10 @@ async function handleMultiRecordDns(domain: string, txtRecords: string[], flags:
     return;
   }
 
-  console.log(`${pc.bold(txtHostFor(domain))}: ${records.length} record(s)\n`);
+  console.log(`${colors.bold(txtHostFor(domain))}: ${records.length} record(s)\n`);
 
   for (const record of records) {
-    console.log(`  ${pc.dim('TXT:')} ${record.raw ?? ''}`);
+    console.log(`  ${colors.dim('TXT:')} ${record.raw ?? ''}`);
     console.log(`  ${summarizeForDisplay(record)}`);
 
     // Show structured "how to use" for discover-only types
@@ -142,7 +142,7 @@ async function handleMultiRecordDns(domain: string, txtRecords: string[], flags:
       const handler = getHandler(record.type);
       if (!handler.capabilities.hasLocalArtifacts) {
         const instructions = handler.describe(record as never);
-        console.log(`  ${pc.dim(instructions.description)}`);
+        console.log(`  ${colors.dim(instructions.description)}`);
       }
     } catch { /* unknown type, summarize already covered it */ }
 

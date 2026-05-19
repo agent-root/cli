@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import pc from 'picocolors';
+import { colors } from '../../cli/colors';
 import { scanInstalled } from '@agent-root/core';
 import { installSkill } from '../install/install-skill.js';
 import type { JsonOut } from '../../types/install.js';
@@ -59,7 +59,7 @@ export async function ensureDefaults(flags: Record<string, unknown>): Promise<vo
   }
 
   if (!quiet) {
-    console.log(`${pc.dim('First run, installing default skills...')}`);
+    console.log(`${colors.dim('First run, installing default skills...')}`);
   }
 
   for (const skill of missing) {
@@ -78,7 +78,7 @@ export async function ensureDefaults(flags: Record<string, unknown>): Promise<vo
         jsonOut,
       });
       if (!quiet && jsonOut.errors.length === 0) {
-        console.log(`  ${pc.green('✓')} ${skill.name}`);
+        console.log(`  ${colors.green('✓')} ${skill.name}`);
       }
     } catch {
       // Non-fatal, don't block the user's command
@@ -88,7 +88,7 @@ export async function ensureDefaults(flags: Record<string, unknown>): Promise<vo
   markInstalled();
 
   if (!quiet) {
-    console.log(`${pc.dim('Done. Use `agentroot list` to see installed skills.')}\n`);
+    console.log(`${colors.dim('Done. Use `agentroot list` to see installed skills.')}\n`);
   }
 }
 

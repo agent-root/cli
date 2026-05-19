@@ -1,4 +1,4 @@
-import pc from 'picocolors';
+import { colors } from '../cli/colors';
 import { fetchJSON } from '../services/http/fetch';
 import { getApiBase } from '../services/config/config-service';
 import { fatal } from '../cli/fatal';
@@ -288,28 +288,28 @@ export function displayResults(results: SearchResult[]): void {
     if (!r) continue;
     const typeLabel = RECORD_TYPES[r.type] ?? r.type;
     const addr = r.address ?? `${r.domain}/${r.id ?? r.record_id}`;
-    const verified = r.verified ? pc.green(' ✓') : '';
-    const num = pc.dim(`${i + 1}.`);
-    console.log(`  ${num} ${pc.bold(r.name ?? r.id ?? '')} ${pc.dim(`[${typeLabel}]`)} ${pc.dim(`(${addr})`)}${verified}`);
+    const verified = r.verified ? colors.green(' ✓') : '';
+    const num = colors.dim(`${i + 1}.`);
+    console.log(`  ${num} ${colors.bold(r.name ?? r.id ?? '')} ${colors.dim(`[${typeLabel}]`)} ${colors.dim(`(${addr})`)}${verified}`);
     if (r.description) {
-      console.log(`     ${pc.dim(r.description)}`);
+      console.log(`     ${colors.dim(r.description)}`);
     }
   }
   console.log();
-  console.log(`  ${pc.dim(`${results.length} result(s)`)}`);
+  console.log(`  ${colors.dim(`${results.length} result(s)`)}`);
 }
 
 function displayPaginationFooter(env: SearchEnvelope, query: string, typeFilter: string): void {
   if (env.total <= env.results.length && env.pages <= 1) return;
   const shown = env.results.length;
   const parts = [`Page ${env.page} of ${env.pages}`, `showing ${shown} of ${env.total} results`];
-  let footer = `  ${pc.dim(parts.join(' (') + ')')}`;
+  let footer = `  ${colors.dim(parts.join(' (') + ')')}`;
   // Build it manually for clarity, the join above is a relic
-  footer = `  ${pc.dim(`Page ${env.page} of ${env.pages} (showing ${shown} of ${env.total} results)`)}`;
+  footer = `  ${colors.dim(`Page ${env.page} of ${env.pages} (showing ${shown} of ${env.total} results)`)}`;
   console.log(footer);
   if (env.page < env.pages) {
     const typeFlag = typeFilter ? ` --type ${typeFilter}` : '';
-    console.log(`  ${pc.dim(`next: agentroot search ${query}${typeFlag} --page ${env.page + 1}`)}`);
+    console.log(`  ${colors.dim(`next: agentroot search ${query}${typeFlag} --page ${env.page + 1}`)}`);
   }
 }
 
@@ -341,17 +341,17 @@ export async function selectResult(results: SearchResult[], flags: Record<string
 
   const typeLabel = RECORD_TYPES[r.type] ?? r.type;
   const addr = r.address ?? `${r.domain}/${r.id}`;
-  const verified = r.verified ? pc.green(' (verified)') : '';
+  const verified = r.verified ? colors.green(' (verified)') : '';
 
   console.log();
-  console.log(`  ${pc.bold(r.name ?? r.id ?? '')}${verified}`);
-  console.log(`  ${pc.dim('type:')}    ${typeLabel}`);
-  console.log(`  ${pc.dim('address:')} ${addr}`);
-  console.log(`  ${pc.dim('domain:')}  ${r.domain}`);
-  if (r.description) console.log(`  ${pc.dim('desc:')}    ${r.description}`);
-  if (r.endpoint) console.log(`  ${pc.dim('endpoint:')} ${r.endpoint}`);
+  console.log(`  ${colors.bold(r.name ?? r.id ?? '')}${verified}`);
+  console.log(`  ${colors.dim('type:')}    ${typeLabel}`);
+  console.log(`  ${colors.dim('address:')} ${addr}`);
+  console.log(`  ${colors.dim('domain:')}  ${r.domain}`);
+  if (r.description) console.log(`  ${colors.dim('desc:')}    ${r.description}`);
+  if (r.endpoint) console.log(`  ${colors.dim('endpoint:')} ${r.endpoint}`);
   console.log();
-  console.log(`  ${pc.dim('To install:')} ${pc.cyan(`npx agent-root install ${addr}`)}`);
+  console.log(`  ${colors.dim('To install:')} ${colors.cyan(`npx agent-root install ${addr}`)}`);
   console.log();
 
   const shouldInstall = await confirmAction('Install this record?', flags ?? {});
@@ -385,7 +385,7 @@ export async function promptSearch(flags: Record<string, unknown>): Promise<Sear
 
   if (results.length === 0) {
     spinner.warn({ text: 'No records found for "' + query + '"' });
-    console.log(`\n  ${pc.dim('Try a domain, skill name, or keyword (e.g. "deploy", "billing", "database")')}`);
+    console.log(`\n  ${colors.dim('Try a domain, skill name, or keyword (e.g. "deploy", "billing", "database")')}`);
     return null;
   }
 

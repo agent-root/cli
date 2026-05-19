@@ -1,5 +1,5 @@
 import os from 'node:os';
-import pc from 'picocolors';
+import { colors } from '../cli/colors';
 import { readInstalledState } from '@agent-root/core';
 import { labelForType } from '../constants/record-types';
 
@@ -19,24 +19,24 @@ export async function cmdList(_positional: string[], flags: Record<string, unkno
 
   if (keys.length === 0) {
     console.log('No AgentRoot records installed.');
-    console.log(`${pc.dim('Install one: npx agent-root install <domain>/<record-id>')}`);
+    console.log(`${colors.dim('Install one: npx agent-root install <domain>/<record-id>')}`);
     return;
   }
 
-  console.log(`${pc.bold('Installed AgentRoot Records')}\n`);
+  console.log(`${colors.bold('Installed AgentRoot Records')}\n`);
 
   for (const key of keys) {
     const entry = entries[key];
     if (!entry) continue;
     const typeLabel = labelForType(entry.type);
-    console.log(`  ${pc.bold(entry.record_id)} ${pc.dim(`[${typeLabel}]`)} ${pc.dim(`(${entry.domain})`)}`);
-    console.log(`  ${pc.dim('installed:')} ${entry.installed_at ? entry.installed_at.split('T')[0] : 'unknown'}  ${pc.dim('hash:')} ${entry.version_hash ?? 'n/a'}`);
+    console.log(`  ${colors.bold(entry.record_id)} ${colors.dim(`[${typeLabel}]`)} ${colors.dim(`(${entry.domain})`)}`);
+    console.log(`  ${colors.dim('installed:')} ${entry.installed_at ? entry.installed_at.split('T')[0] : 'unknown'}  ${colors.dim('hash:')} ${entry.version_hash ?? 'n/a'}`);
     for (const [tool, info] of Object.entries(entry.tools)) {
       const shortPath = info.path.replace(os.homedir(), '~');
-      console.log(`  ${pc.dim(tool + ':')} ${shortPath} ${pc.dim('(' + info.link_type + ')')}`);
+      console.log(`  ${colors.dim(tool + ':')} ${shortPath} ${colors.dim('(' + info.link_type + ')')}`);
     }
     console.log();
   }
 
-  console.log(`${pc.dim(`${keys.length} record(s) total`)}`);
+  console.log(`${colors.dim(`${keys.length} record(s) total`)}`);
 }

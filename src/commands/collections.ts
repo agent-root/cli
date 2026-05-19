@@ -1,4 +1,4 @@
-import pc from 'picocolors';
+import { colors } from '../cli/colors';
 import { fetchJSON } from '../services/http/fetch';
 import { getApiBase } from '../services/config/config-service';
 import { maybeSpinner } from '../cli/spinner';
@@ -33,15 +33,15 @@ interface CollectionDetailResponse {
 }
 
 function renderCollectionSummary(row: CollectionSummary, idx: number): void {
-  const num = pc.dim(`${idx + 1}.`);
-  const slug = pc.bold(row.slug ?? '(unknown)');
-  const name = row.name ? `${pc.dim('-')} ${row.name}` : '';
+  const num = colors.dim(`${idx + 1}.`);
+  const slug = colors.bold(row.slug ?? '(unknown)');
+  const name = row.name ? `${colors.dim('-')} ${row.name}` : '';
   console.log(`  ${num} ${slug} ${name}`);
   if (row.description) {
-    console.log(`     ${pc.dim(row.description)}`);
+    console.log(`     ${colors.dim(row.description)}`);
   }
   if (typeof row.item_count === 'number') {
-    console.log(`     ${pc.dim('items:')} ${row.item_count}`);
+    console.log(`     ${colors.dim('items:')} ${row.item_count}`);
   }
 }
 
@@ -68,19 +68,19 @@ async function renderCollectionList(flags: Record<string, unknown>): Promise<voi
     if (row) renderCollectionSummary(row, i);
   }
   console.log();
-  console.log(`  ${pc.dim('View one:')} ${pc.cyan('agent-root collections <slug>')}`);
+  console.log(`  ${colors.dim('View one:')} ${colors.cyan('agent-root collections <slug>')}`);
 }
 
 function renderCollectionItem(item: CollectionItem, idx: number): void {
-  const num = pc.dim(`${idx + 1}.`);
+  const num = colors.dim(`${idx + 1}.`);
   const manifest = item.manifest ?? {};
   const domain = String(manifest['domain'] ?? '(unknown)');
   const status = String(manifest['status'] ?? '?');
   const url = String(manifest['manifest_url'] ?? '');
-  const statusBadge = status === 'active' ? pc.green(status) : pc.yellow(status);
-  console.log(`  ${num} ${pc.bold(domain)} ${pc.dim(`[${statusBadge}]`)}`);
-  if (url) console.log(`     ${pc.dim('manifest:')} ${url}`);
-  if (item.note) console.log(`     ${pc.dim('note:')}     ${item.note}`);
+  const statusBadge = status === 'active' ? colors.green(status) : colors.yellow(status);
+  console.log(`  ${num} ${colors.bold(domain)} ${colors.dim(`[${statusBadge}]`)}`);
+  if (url) console.log(`     ${colors.dim('manifest:')} ${url}`);
+  if (item.note) console.log(`     ${colors.dim('note:')}     ${item.note}`);
 }
 
 async function renderCollectionDetail(slug: string, flags: Record<string, unknown>): Promise<void> {
@@ -103,8 +103,8 @@ async function renderCollectionDetail(slug: string, flags: Record<string, unknow
   spinner.success({ text: `${data.name ?? slug} (${items.length} item(s))` });
 
   console.log();
-  console.log(`  ${pc.bold(data.name ?? slug)}`);
-  if (data.description) console.log(`  ${pc.dim(data.description)}`);
+  console.log(`  ${colors.bold(data.name ?? slug)}`);
+  if (data.description) console.log(`  ${colors.dim(data.description)}`);
   console.log();
   for (let i = 0; i < items.length; i++) {
     const item = items[i];

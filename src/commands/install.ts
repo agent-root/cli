@@ -1,4 +1,4 @@
-import pc from 'picocolors';
+import { colors } from '../cli/colors';
 import { fetchJSON } from '../services/http/fetch';
 import { getApiBase } from '../services/config/config-service';
 import { resolveAgentroot } from '../services/dns/dns-service';
@@ -38,28 +38,28 @@ export function installMcp(
 
   if (flags && flags['json']) return;
 
-  const displayName = pc.bold((record['name'] || recordId) as string);
-  console.log(`${pc.green('found')} MCP server: ${displayName}\n`);
+  const displayName = colors.bold((record['name'] || recordId) as string);
+  console.log(`${colors.green('found')} MCP server: ${displayName}\n`);
   if (record['description']) console.log(`  ${record['description'] as string}\n`);
 
   if (Array.isArray(record['tools']) && record['tools'].length > 0) {
-    console.log(`  ${pc.dim('Tools:')}`);
+    console.log(`  ${colors.dim('Tools:')}`);
     for (const t of record['tools'] as Array<{ name: string; description?: string }>) {
-      console.log(`    ${pc.cyan(t.name)}${t.description ? `: ${pc.dim(t.description)}` : ''}`);
+      console.log(`    ${colors.cyan(t.name)}${t.description ? `: ${colors.dim(t.description)}` : ''}`);
     }
     console.log();
   }
 
   if (configObject) {
-    console.log(`${pc.bold('Add to your MCP config:')}\n`);
+    console.log(`${colors.bold('Add to your MCP config:')}\n`);
     console.log(JSON.stringify(configObject, null, 2));
   }
 
-  console.log(`\n${pc.dim('For Claude Code:  Add to .claude/settings.json under "mcpServers"')}`);
-  console.log(`${pc.dim('For Cursor:       Add to .cursor/mcp.json under "mcpServers"')}`);
+  console.log(`\n${colors.dim('For Claude Code:  Add to .claude/settings.json under "mcpServers"')}`);
+  console.log(`${colors.dim('For Cursor:       Add to .cursor/mcp.json under "mcpServers"')}`);
   if (record['auth'] && record['auth'] !== 'none') {
-    const authLabel = pc.bold(record['auth'] as string);
-    console.log(`\n${pc.yellow('note')} This MCP server requires auth: ${authLabel}`);
+    const authLabel = colors.bold(record['auth'] as string);
+    console.log(`\n${colors.yellow('note')} This MCP server requires auth: ${authLabel}`);
     if (record['docs']) console.log(`  See: ${record['docs'] as string}`);
   }
 }
@@ -84,20 +84,20 @@ export function installAgent(
 
   if (flags && flags['json']) return;
 
-  const displayName = pc.bold((record['name'] || recordId) as string);
-  console.log(`${pc.green('found')} ${typeLabel}: ${displayName}\n`);
+  const displayName = colors.bold((record['name'] || recordId) as string);
+  console.log(`${colors.green('found')} ${typeLabel}: ${displayName}\n`);
   if (record['description']) console.log(`  ${record['description'] as string}\n`);
-  if (record['endpoint']) console.log(`  ${pc.dim('endpoint:')} ${record['endpoint'] as string}`);
-  if (record['protocol']) console.log(`  ${pc.dim('protocol:')} ${record['protocol'] as string}`);
+  if (record['endpoint']) console.log(`  ${colors.dim('endpoint:')} ${record['endpoint'] as string}`);
+  if (record['protocol']) console.log(`  ${colors.dim('protocol:')} ${record['protocol'] as string}`);
   if (record['capabilities']) {
     const caps = (record['capabilities'] as string[]).join(', ');
-    console.log(`  ${pc.dim('capabilities:')} ${caps}`);
+    console.log(`  ${colors.dim('capabilities:')} ${caps}`);
   }
-  if (record['auth']) console.log(`  ${pc.dim('auth:')} ${record['auth'] as string}`);
-  if (record['docs']) console.log(`  ${pc.dim('docs:')} ${record['docs'] as string}`);
+  if (record['auth']) console.log(`  ${colors.dim('auth:')} ${record['auth'] as string}`);
+  if (record['docs']) console.log(`  ${colors.dim('docs:')} ${record['docs'] as string}`);
   console.log();
   const protoLabel = record['protocol'] || 'a2a';
-  console.log(pc.dim(`Agents are accessed via their endpoint. Use the protocol (${protoLabel}) to connect.`));
+  console.log(colors.dim(`Agents are accessed via their endpoint. Use the protocol (${protoLabel}) to connect.`));
 }
 
 // --- public: command entry point ---

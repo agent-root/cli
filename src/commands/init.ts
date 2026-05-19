@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import pc from 'picocolors';
+import { colors } from '../cli/colors';
 import { MANIFEST_PATH } from '@agent-root/core';
 import { fatal } from '../cli/fatal';
 import { getApiBase } from '../services/config/config-service';
@@ -21,13 +21,13 @@ export async function cmdInit(positional: string[], flags: Record<string, unknow
 
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(outputPath, JSON.stringify(template, null, 2) + '\n', 'utf-8');
-  console.log(`${pc.green('created')} ${outputPath}\n`);
+  console.log(`${colors.green('created')} ${outputPath}\n`);
   console.log('Next steps:');
   console.log(`  1. Edit ${outputPath} with your records`);
-  console.log(`  2. Run ${pc.cyan(`npx agent-root validate ${outputPath}`)}`);
+  console.log(`  2. Run ${colors.cyan(`npx agent-root validate ${outputPath}`)}`);
   console.log(`  3. Add a DNS TXT record:`);
-  console.log(`     ${pc.dim(`${txtHostFor(domain)} TXT "${buildTxtRecord(domain)}"`)}`);
-  console.log(`  4. Deploy and submit: ${pc.cyan(`curl -X POST ${getApiBase()}/api/submit -H "Content-Type: application/json" -d '{"domain":"${domain}"}'`)}`);
+  console.log(`     ${colors.dim(`${txtHostFor(domain)} TXT "${buildTxtRecord(domain)}"`)}`);
+  console.log(`  4. Deploy and submit: ${colors.cyan(`curl -X POST ${getApiBase()}/api/submit -H "Content-Type: application/json" -d '{"domain":"${domain}"}'`)}`);
 }
 
 // --- private helpers ---

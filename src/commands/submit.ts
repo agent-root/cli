@@ -1,4 +1,4 @@
-import pc from 'picocolors';
+import { colors } from '../cli/colors';
 import { postJSON } from '../services/http/fetch';
 import { getApiBase } from '../services/config/config-service';
 import { resolveAgentroot } from '../services/dns/dns-service';
@@ -41,16 +41,16 @@ function printInstructions(domain: string, instructions: InstructionsBlock | und
   const ar = instructions.agentroot;
   if (ar && ar.value) {
     console.log();
-    console.log(`  ${pc.bold('Add this DNS TXT record, then re-submit:')}`);
+    console.log(`  ${colors.bold('Add this DNS TXT record, then re-submit:')}`);
     console.log();
-    console.log(`    ${pc.dim('host:')}  ${ar.record ?? txtHostFor(domain)}`);
-    console.log(`    ${pc.dim('type:')}  ${ar.type ?? 'TXT'}`);
-    console.log(`    ${pc.dim('value:')} ${ar.value}`);
+    console.log(`    ${colors.dim('host:')}  ${ar.record ?? txtHostFor(domain)}`);
+    console.log(`    ${colors.dim('type:')}  ${ar.type ?? 'TXT'}`);
+    console.log(`    ${colors.dim('value:')} ${ar.value}`);
     console.log();
-    console.log(`  ${pc.dim('Once propagated:')} ${pc.cyan(`agent-root submit ${domain}`)}`);
+    console.log(`  ${colors.dim('Once propagated:')} ${colors.cyan(`agent-root submit ${domain}`)}`);
     console.log();
     if (instructions.spec) {
-      console.log(`  ${pc.dim('Reference:')} ${instructions.spec}`);
+      console.log(`  ${colors.dim('Reference:')} ${instructions.spec}`);
     }
   }
 }
@@ -59,17 +59,17 @@ function printValidationErrors(errs: string[] | undefined, warnings: string[] | 
   let printed = false;
   if (errs && errs.length > 0) {
     console.log();
-    console.log(`  ${pc.bold(pc.red('Validation errors:'))}`);
+    console.log(`  ${colors.bold(colors.red('Validation errors:'))}`);
     for (const e of errs) {
-      console.log(`    ${pc.red('-')} ${e}`);
+      console.log(`    ${colors.red('-')} ${e}`);
     }
     printed = true;
   }
   if (warnings && warnings.length > 0) {
     console.log();
-    console.log(`  ${pc.bold(pc.yellow('Warnings:'))}`);
+    console.log(`  ${colors.bold(colors.yellow('Warnings:'))}`);
     for (const w of warnings) {
-      console.log(`    ${pc.yellow('-')} ${w}`);
+      console.log(`    ${colors.yellow('-')} ${w}`);
     }
     printed = true;
   }
@@ -154,14 +154,14 @@ export async function cmdSubmit(positional: string[], flags: Record<string, unkn
       : resolvedManifestUrl;
     if (manifestUrl) {
       console.log();
-      console.log(`  ${pc.dim('manifest:')} ${manifestUrl}`);
+      console.log(`  ${colors.dim('manifest:')} ${manifestUrl}`);
     }
     if (typeof data.records_indexed === 'number') {
-      console.log(`  ${pc.dim('indexed:')}  ${data.records_indexed} record(s)`);
+      console.log(`  ${colors.dim('indexed:')}  ${data.records_indexed} record(s)`);
     }
     const found = data.found ?? [];
     if (found.length > 0) {
-      console.log(`  ${pc.dim('found:')}    ${found.join(', ')}`);
+      console.log(`  ${colors.dim('found:')}    ${found.join(', ')}`);
     }
     return;
   }
@@ -174,8 +174,8 @@ export async function cmdSubmit(positional: string[], flags: Record<string, unkn
   // Legacy shape: explicit verification_required + txt_record at top level.
   if (data.verification_required && data.txt_record) {
     console.log();
-    console.log(`  ${pc.bold('Add this DNS TXT record, then re-submit:')}`);
-    console.log(`    ${pc.dim('value:')} ${data.txt_record}`);
+    console.log(`  ${colors.bold('Add this DNS TXT record, then re-submit:')}`);
+    console.log(`    ${colors.dim('value:')} ${data.txt_record}`);
   } else if (!hadValidation) {
     // Current shape: print the `instructions` block when DNS lookup failed.
     printInstructions(domain, data.instructions);

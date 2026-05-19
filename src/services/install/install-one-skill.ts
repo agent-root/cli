@@ -1,5 +1,5 @@
 import path from 'node:path';
-import pc from 'picocolors';
+import { colors } from '../../cli/colors';
 import { resolveToolDir, hashContent, writeSkill, parseSupportingFiles } from '@agent-root/core';
 import { fetch } from '../http/fetch';
 import { ensureCanonicalStore, createSymlink } from './symlink';
@@ -20,7 +20,7 @@ export async function installOneSkill(
   jsonOut: JsonOut,
 ): Promise<number> {
   if (!skill.url) {
-    if (!flags['json']) console.log(`${pc.yellow('skip')} ${skill.id}, no SKILL.md URL`);
+    if (!flags['json']) console.log(`${colors.yellow('skip')} ${skill.id}, no SKILL.md URL`);
     jsonOut.skipped.push({ id: skill.id, reason: 'no SKILL.md URL' });
     return 0;
   }
@@ -30,7 +30,7 @@ export async function installOneSkill(
     content = await fetch(skill.url);
   } catch (err) {
     if (!flags['json']) {
-      console.log(`${pc.red('fail')} ${skill.id}, could not fetch SKILL.md: ${(err as Error).message}`);
+      console.log(`${colors.red('fail')} ${skill.id}, could not fetch SKILL.md: ${(err as Error).message}`);
     }
     jsonOut.errors.push({ id: skill.id, error: (err as Error).message });
     return 0;
@@ -84,7 +84,7 @@ export async function installOneSkill(
       const skillPath = path.join(skillDir, 'SKILL.md');
       writeSkill(skillDir, content, { ...perSkillManifest, tool }, supportingFiles);
       linkTypes[tool] = 'copy';
-      if (!flags['json']) console.log(`${pc.green('installed')} ${pc.bold(skill.id)} → ${skillPath}`);
+      if (!flags['json']) console.log(`${colors.green('installed')} ${colors.bold(skill.id)} → ${skillPath}`);
       jsonOut.installed.push({ tool, path: skillPath, id: skill.id, link_type: 'copy' });
     } else {
       const baseDir = resolveToolDir(tool, false);
@@ -92,7 +92,7 @@ export async function installOneSkill(
       const linkType = createSymlink(canonicalDir, toolSkillDir);
       linkTypes[tool] = linkType;
       if (!flags['json'] && !flags['_quiet']) {
-        console.log(`${pc.green('linked')} ${pc.bold(skill.id)} → ${toolSkillDir} (${linkType})`);
+        console.log(`${colors.green('linked')} ${colors.bold(skill.id)} → ${toolSkillDir} (${linkType})`);
       }
       jsonOut.installed.push({ tool, path: toolSkillDir, id: skill.id, link_type: linkType });
     }

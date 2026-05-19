@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import pc from 'picocolors';
+import { colors } from '../cli/colors';
 import { detectTools } from '@agent-root/core';
 import { maybeSpinner } from '../cli/spinner';
 import { confirmAction } from '../cli/confirm';
@@ -95,7 +95,7 @@ const installSkillFromResult: InstallAction = async ({ result, domain, recordId,
     flags: { ...flags, _selectedTools: tools, _quiet: true },
     jsonOut,
   });
-  instSpinner.success({ text: `Installed ${pc.bold(result.name || recordId)} successfully` });
+  instSpinner.success({ text: `Installed ${colors.bold(result.name || recordId)} successfully` });
   return true;
 };
 
@@ -111,10 +111,10 @@ const installMcpFromResult: InstallAction = async ({ result, domain, recordId, f
     if (!shouldWrite) continue;
     try {
       writeMcpConfig(configPath, domain, recordId, result);
-      console.log(`  ${pc.green('written')} ${configPath}`);
+      console.log(`  ${colors.green('written')} ${configPath}`);
       jsonOut.installed.push({ tool, configPath, type: 'mcp' });
     } catch (err) {
-      console.log(`  ${pc.red('fail')} ${tool}: ${(err as Error).message}`);
+      console.log(`  ${colors.red('fail')} ${tool}: ${(err as Error).message}`);
       jsonOut.errors.push({ tool, error: (err as Error).message });
     }
   }
@@ -159,34 +159,34 @@ function printSkillSummary(result: SearchResult, domain: string, recordId: strin
   console.log();
   const canonPath = `~/.agents/skills/${domain}/${recordId}`;
   console.log(`  Installing...`);
-  console.log(`    ${pc.green('->')} ${canonPath}/SKILL.md ${pc.dim('(canonical)')}`);
+  console.log(`    ${colors.green('->')} ${canonPath}/SKILL.md ${colors.dim('(canonical)')}`);
   for (const inst of jsonOut.installed) {
     const shortPath = (inst['path'] as string).replace(os.homedir(), '~');
-    console.log(`    ${pc.green('->')} ${shortPath} ${pc.dim('->')} ${pc.dim((inst['link_type'] as string) || 'symlink')}`);
+    console.log(`    ${colors.green('->')} ${shortPath} ${colors.dim('->')} ${colors.dim((inst['link_type'] as string) || 'symlink')}`);
   }
   console.log();
-  console.log(`  ${pc.green('+')} Installed ${pc.bold('"' + (result.name || recordId) + '"')} to ${installedCount} tool${installedCount > 1 ? 's' : ''}`);
-  console.log(`     Source: ${domain} | Verified: ${result.verified ? pc.green('+') : pc.yellow('-')} | Type: ${RECORD_TYPES[result.type] ?? result.type}`);
+  console.log(`  ${colors.green('+')} Installed ${colors.bold('"' + (result.name || recordId) + '"')} to ${installedCount} tool${installedCount > 1 ? 's' : ''}`);
+  console.log(`     Source: ${domain} | Verified: ${result.verified ? colors.green('+') : colors.yellow('-')} | Type: ${RECORD_TYPES[result.type] ?? result.type}`);
   console.log();
-  console.log(`  ${pc.dim('The skill is now available to your AI tools.')}`);
-  console.log(`  ${pc.dim('To update:')} npx agent-root update ${domain}/${recordId}`);
-  console.log(`  ${pc.dim('To remove:')} npx agent-root uninstall ${domain}/${recordId}`);
+  console.log(`  ${colors.dim('The skill is now available to your AI tools.')}`);
+  console.log(`  ${colors.dim('To update:')} npx agent-root update ${domain}/${recordId}`);
+  console.log(`  ${colors.dim('To remove:')} npx agent-root uninstall ${domain}/${recordId}`);
   console.log();
 }
 
 function printMcpSummary(result: SearchResult, domain: string, recordId: string, jsonOut: JsonOut): void {
   console.log();
-  console.log(`  ${pc.green('+')} Configured ${pc.bold('"' + (result.name || recordId) + '"')} MCP server`);
+  console.log(`  ${colors.green('+')} Configured ${colors.bold('"' + (result.name || recordId) + '"')} MCP server`);
   console.log(`     Source: ${domain} | Type: MCP`);
   for (const inst of jsonOut.installed) {
-    console.log(`    ${pc.green('->')} ${inst['configPath'] as string}`);
+    console.log(`    ${colors.green('->')} ${inst['configPath'] as string}`);
   }
   console.log();
 }
 
 function printAgentLikeSummary(result: SearchResult, domain: string, recordId: string): void {
   console.log();
-  console.log(`  ${pc.cyan('i')} ${pc.bold(result.name || recordId)} (${result.type})`);
+  console.log(`  ${colors.cyan('i')} ${colors.bold(result.name || recordId)} (${result.type})`);
   console.log(`     Endpoint: ${result.endpoint || 'not specified'}`);
   console.log(`     Source: ${domain}`);
   if (result.type === 'payment') {
@@ -243,16 +243,16 @@ async function promptToolSelect(flags: Record<string, unknown>): Promise<string[
   const detected = detectTools();
 
   if (detected.length === 0) {
-    console.log(`\n  ${pc.dim('No AI tools detected, will install to ~/.agents/skills/')}`);
+    console.log(`\n  ${colors.dim('No AI tools detected, will install to ~/.agents/skills/')}`);
     return ['agents'];
   }
 
-  console.log(`\n  ${pc.bold('Detected AI tools on your machine:')}`);
+  console.log(`\n  ${colors.bold('Detected AI tools on your machine:')}`);
   for (const t of DETECTABLE_TOOLS) {
     const found = detected.includes(t);
-    const icon = found ? pc.green('[+]') : pc.dim('[ ]');
-    const label = found ? TOOL_LABELS[t] : pc.dim((TOOL_LABELS[t] ?? t) + ' (not detected)');
-    const p = found ? pc.dim(`(${TOOL_PATHS[t] ?? ''})`) : '';
+    const icon = found ? colors.green('[+]') : colors.dim('[ ]');
+    const label = found ? TOOL_LABELS[t] : colors.dim((TOOL_LABELS[t] ?? t) + ' (not detected)');
+    const p = found ? colors.dim(`(${TOOL_PATHS[t] ?? ''})`) : '';
     console.log(`    ${icon} ${label}  ${p}`);
   }
   console.log();
@@ -264,7 +264,7 @@ async function promptToolSelect(flags: Record<string, unknown>): Promise<string[
     checkbox: (opts: { message: string; choices: Array<{ name: string; value: string; checked: boolean }> }) => Promise<string[]>
   };
 
-  const choices = detected.map(t => ({ name: `${TOOL_LABELS[t] ?? t}   ${pc.dim(TOOL_PATHS[t] ?? '')}`, value: t, checked: true }));
+  const choices = detected.map(t => ({ name: `${TOOL_LABELS[t] ?? t}   ${colors.dim(TOOL_PATHS[t] ?? '')}`, value: t, checked: true }));
 
   let selected: string[];
   try {
@@ -274,7 +274,7 @@ async function promptToolSelect(flags: Record<string, unknown>): Promise<string[
   }
 
   if (selected.length === 0) {
-    console.log(`  ${pc.dim('No tools selected, cancelled.')}`);
+    console.log(`  ${colors.dim('No tools selected, cancelled.')}`);
     return [];
   }
 

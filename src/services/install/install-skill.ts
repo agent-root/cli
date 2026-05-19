@@ -1,4 +1,4 @@
-import pc from 'picocolors';
+import { colors } from '../../cli/colors';
 import { fatal } from '../../cli/fatal';
 import { detectTargetTools } from './detect-target-tools';
 import { gatherSkillsToInstall } from './gather-skills';
@@ -31,6 +31,6 @@ export async function installSkill(opts: InstallSkillOptions): Promise<void> {
   }
 
   if (installed > 0 && !flags['json'] && !flags['_quiet']) {
-    console.log(`\n${pc.green('✓')} ${installed} skill(s) installed successfully`);
+    console.log(`\n${colors.green('✓')} ${installed} skill(s) installed successfully`);
   }
 }

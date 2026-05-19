@@ -1,4 +1,4 @@
-import pc from 'picocolors';
+import { colors } from '../cli/colors';
 import { fetchJSON } from '../services/http/fetch';
 import { getApiBase } from '../services/config/config-service';
 import { maybeSpinner } from '../cli/spinner';
@@ -81,23 +81,23 @@ async function listAllManifests(opts: FetchOpts): Promise<ManifestsEnvelope> {
 }
 
 function renderRow(row: ManifestRow, idx: number): void {
-  const num = pc.dim(`${idx + 1}.`);
-  const domain = pc.bold(row.domain ?? '(unknown)');
-  const status = row.status === 'active' ? pc.green(row.status) : pc.yellow(row.status ?? 'unknown');
-  console.log(`  ${num} ${domain} ${pc.dim(`[${status}]`)}`);
+  const num = colors.dim(`${idx + 1}.`);
+  const domain = colors.bold(row.domain ?? '(unknown)');
+  const status = row.status === 'active' ? colors.green(row.status) : colors.yellow(row.status ?? 'unknown');
+  console.log(`  ${num} ${domain} ${colors.dim(`[${status}]`)}`);
   if (row.manifest_url) {
-    console.log(`     ${pc.dim('manifest:')} ${row.manifest_url}`);
+    console.log(`     ${colors.dim('manifest:')} ${row.manifest_url}`);
   }
   if (row.record_counts) {
     const parts = Object.entries(row.record_counts)
       .filter(([, n]) => typeof n === 'number' && n > 0)
       .map(([k, n]) => `${k}=${n}`);
     if (parts.length > 0) {
-      console.log(`     ${pc.dim('records:')}  ${parts.join(', ')}`);
+      console.log(`     ${colors.dim('records:')}  ${parts.join(', ')}`);
     }
   }
   if (row.last_verified) {
-    console.log(`     ${pc.dim('verified:')} ${row.last_verified.split('T')[0]}`);
+    console.log(`     ${colors.dim('verified:')} ${row.last_verified.split('T')[0]}`);
   }
 }
 
@@ -136,10 +136,10 @@ export async function cmdManifests(positional: string[], flags: Record<string, u
     renderRow(row, i);
   }
   console.log();
-  console.log(`  ${pc.dim(`Page ${envelope.page} of ${envelope.pages} (showing ${envelope.manifests.length} of ${envelope.total} manifests)`)}`);
+  console.log(`  ${colors.dim(`Page ${envelope.page} of ${envelope.pages} (showing ${envelope.manifests.length} of ${envelope.total} manifests)`)}`);
   if (envelope.page < envelope.pages) {
     const typeFlag = typeFilter ? ` --type ${typeFilter}` : '';
     const qFlag = query ? ` --query ${query}` : '';
-    console.log(`  ${pc.dim(`next: agentroot manifests${qFlag}${typeFlag} --page ${envelope.page + 1}`)}`);
+    console.log(`  ${colors.dim(`next: agentroot manifests${qFlag}${typeFlag} --page ${envelope.page + 1}`)}`);
   }
 }

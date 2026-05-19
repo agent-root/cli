@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import pc from 'picocolors';
+import { colors } from '../cli/colors';
 import {
   hashContent, readInstalledState, upsertInstalled, type InstalledEntry,
 } from '@agent-root/core';
@@ -35,11 +35,11 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
   if (positional.length === 0) {
     if (allKeys.length === 0) {
       console.log('No AgentRoot records installed.');
-      console.log(`${pc.dim('Install one first: npx agent-root install <domain>/<record-id>')}`);
+      console.log(`${colors.dim('Install one first: npx agent-root install <domain>/<record-id>')}`);
       return;
     }
 
-    console.log(`${pc.bold('Checking ' + allKeys.length + ' installed record(s)...')}\n`);
+    console.log(`${colors.bold('Checking ' + allKeys.length + ' installed record(s)...')}\n`);
 
     // Fetch every installed record's source in parallel, for N installed
     // skills this turns N sequential round-trips into one round-trip total.
@@ -85,7 +85,7 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
       console.log(JSON.stringify({ status: 'not-found', message: `No AgentRoot installation found for ${key}` }));
     } else {
       console.log(`No AgentRoot installation found for ${key}`);
-      console.log(`${pc.dim(`Install it first: npx agent-root install ${key}`)}`);
+      console.log(`${colors.dim(`Install it first: npx agent-root install ${key}`)}`);
     }
     return;
   }
@@ -131,7 +131,7 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
   if (!flags['json']) {
     for (const [toolName, toolEntry] of Object.entries(entry.tools)) {
       if (toolEntry.link_type === 'copy') {
-        console.log(`${pc.green('updated')} ${toolName}: ${toolEntry.path} (copy)`);
+        console.log(`${colors.green('updated')} ${toolName}: ${toolEntry.path} (copy)`);
       }
     }
   }
@@ -159,12 +159,12 @@ function handleOutcome(
   if (outcome.kind === 'skip') {
     const entry = installed[outcome.key];
     if (entry && !entry.source_url) {
-      console.log(`  ${pc.yellow('skip')} ${outcome.key}, no source_url`);
+      console.log(`  ${colors.yellow('skip')} ${outcome.key}, no source_url`);
     }
     return;
   }
   if (outcome.kind === 'fail') {
-    console.log(`  ${pc.red('fail')} ${outcome.key}, ${outcome.message}`);
+    console.log(`  ${colors.red('fail')} ${outcome.key}, ${outcome.message}`);
     tally.failed++;
     return;
   }
@@ -172,7 +172,7 @@ function handleOutcome(
   const { key, entry, content } = outcome;
   const newHash = hashContent(content);
   if (newHash === entry.version_hash) {
-    console.log(`  ${pc.green('✓')} ${key}, up to date`);
+    console.log(`  ${colors.green('✓')} ${key}, up to date`);
     tally.upToDate++;
     return;
   }
@@ -187,7 +187,7 @@ function handleOutcome(
     version_hash: newHash,
     tools: entry.tools,
   });
-  console.log(`  ${pc.green('↑')} ${key}, ${pc.bold('updated')} (${newHash.slice(0, 8)})`);
+  console.log(`  ${colors.green('↑')} ${key}, ${colors.bold('updated')} (${newHash.slice(0, 8)})`);
   tally.updated++;
 }
 

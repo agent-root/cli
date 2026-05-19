@@ -1,4 +1,4 @@
-import pc from 'picocolors';
+import { colors, configureColors } from './cli/colors';
 import { cmdResolve } from './commands/resolve';
 import { cmdInstall } from './commands/install';
 import { cmdSearch, promptSearch } from './commands/search';
@@ -20,34 +20,34 @@ import { DOCS_URL } from './constants/protocol';
 
 export function showHelp(): void {
   console.log(`
-${pc.bold('agentroot')}: CLI for the AgentRoot protocol
+${colors.bold('agentroot')}: CLI for the AgentRoot protocol
 
-${pc.bold('USAGE')}
+${colors.bold('USAGE')}
   npx agent-root <command> [options]
 
-${pc.bold('DISCOVER')}
-  ${pc.cyan('resolve')}  <domain>[/<record-id>]  DNS lookup → fetch manifest → show records (auto-installs skills)
-  ${pc.cyan('search')}   <query>                  Search the AgentRoot registry
+${colors.bold('DISCOVER')}
+  ${colors.cyan('resolve')}  <domain>[/<record-id>]  DNS lookup → fetch manifest → show records (auto-installs skills)
+  ${colors.cyan('search')}   <query>                  Search the AgentRoot registry
 
-${pc.bold('INSTALL')}
-  ${pc.cyan('install')}   <domain>/<record-id>    Install a record (skill or MCP)
-  ${pc.cyan('list')}                              Show installed records
-  ${pc.cyan('update')}    <domain>/<record-id>    Re-fetch from source
-  ${pc.cyan('uninstall')} <record-id>             Remove an installed record
+${colors.bold('INSTALL')}
+  ${colors.cyan('install')}   <domain>/<record-id>    Install a record (skill or MCP)
+  ${colors.cyan('list')}                              Show installed records
+  ${colors.cyan('update')}    <domain>/<record-id>    Re-fetch from source
+  ${colors.cyan('uninstall')} <record-id>             Remove an installed record
 
-${pc.bold('PUBLISH')}
-  ${pc.cyan('init')}     [path]                   Scaffold a manifest
-  ${pc.cyan('validate')} [path]                   Validate a manifest
-  ${pc.cyan('submit')}   <domain>                 Submit a domain to the public registry
+${colors.bold('PUBLISH')}
+  ${colors.cyan('init')}     [path]                   Scaffold a manifest
+  ${colors.cyan('validate')} [path]                   Validate a manifest
+  ${colors.cyan('submit')}   <domain>                 Submit a domain to the public registry
 
-${pc.bold('REGISTRY')}
-  ${pc.cyan('stats')}                              Registry counts (agents, skills, by TLD)
-  ${pc.cyan('health')}                             Probe the registry API
-  ${pc.cyan('manifests')} [--query <q>]            List registered manifests
-  ${pc.cyan('collections')} [<slug>]               Browse curated collections
-  ${pc.cyan('version')}                            Print version + runtime + config info
+${colors.bold('REGISTRY')}
+  ${colors.cyan('stats')}                              Registry counts (agents, skills, by TLD)
+  ${colors.cyan('health')}                             Probe the registry API
+  ${colors.cyan('manifests')} [--query <q>]            List registered manifests
+  ${colors.cyan('collections')} [<slug>]               Browse curated collections
+  ${colors.cyan('version')}                            Print version + runtime + config info
 
-${pc.bold('OPTIONS')}
+${colors.bold('OPTIONS')}
   --help, -h         Show this help
   --version, -v      Print CLI version (one line)
   --tool <name>      Target tool: claude, codex, gemini, cursor, agents
@@ -68,32 +68,32 @@ ${pc.bold('OPTIONS')}
   Flag names accept both kebab-case (--manifest-url) and camelCase (--manifestUrl).
   Use --key=value or --key value. Use -- to end option parsing.
 
-${pc.bold('EXAMPLES')}
-  ${pc.dim('# Resolve a domain\'s capabilities directly via DNS')}
+${colors.bold('EXAMPLES')}
+  ${colors.dim('# Resolve a domain\'s capabilities directly via DNS')}
   npx agent-root resolve doma.xyz
   npx agent-root resolve doma.xyz/doma-protocol
 
-  ${pc.dim('# Search the public registry')}
+  ${colors.dim('# Search the public registry')}
   npx agent-root search doma
   npx agent-root search "register domain" --type skill
 
-  ${pc.dim('# Install a record')}
+  ${colors.dim('# Install a record')}
   npx agent-root install doma.xyz/doma-protocol --tool claude
 
-  ${pc.dim('# Publish your own manifest')}
+  ${colors.dim('# Publish your own manifest')}
   npx agent-root init --domain mycompany.com
   npx agent-root validate .well-known/agentroot.json
   npx agent-root submit mycompany.com
 
-  ${pc.dim('# Browse the registry')}
+  ${colors.dim('# Browse the registry')}
   npx agent-root stats
   npx agent-root manifests --query doma
   npx agent-root collections featured-domains
 
-  ${pc.dim('# Bug report? Paste this first.')}
+  ${colors.dim('# Bug report? Paste this first.')}
   npx agent-root version
 
-${pc.bold('PROTOCOL')}
+${colors.bold('PROTOCOL')}
   AgentRoot resolves AI capabilities via DNS TXT records + JSON manifests.
   Any domain can declare agents, MCP servers, skills, and A2A endpoints.
   See: ${DOCS_URL}
@@ -103,6 +103,11 @@ ${pc.bold('PROTOCOL')}
 export async function main(): Promise<void> {
   const isTTY = !!process.stdout.isTTY;
   const { cmd, positional, flags } = parseArgs(process.argv);
+
+  // Wire color and quiet state from flags + env *before* anything writes output.
+  // Done in this exact order so showHelp(), the version printer, and every
+  // command see consistent behavior.
+  configureColors(flags);
 
   // `--version` / `-v` short-circuit, no DB/network side effects.
   if (flags.version && cmd === undefined) {

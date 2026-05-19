@@ -1,9 +1,9 @@
-import pc from 'picocolors';
+import { colors } from './colors';
 
 export function fatal(msg: string, suggestion?: string): never {
-  console.error(`${pc.red('error')} ${msg}`);
+  console.error(`${colors.red('error')} ${msg}`);
   if (suggestion) {
-    console.error(`       ${pc.dim(suggestion)}`);
+    console.error(`       ${colors.dim(suggestion)}`);
   }
   process.exit(1);
 }

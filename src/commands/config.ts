@@ -1,4 +1,4 @@
-import pc from 'picocolors';
+import { colors } from '../cli/colors';
 import { API_BASE } from '@agent-root/core';
 import { loadConfig, saveConfig, CONFIG_PATH } from '../services/config/config-service';
 import { fatal } from '../cli/fatal';
@@ -15,8 +15,8 @@ export async function cmdConfig(positional: string[], _flags: Record<string, unk
     const current = loadConfig();
     current[key] = value;
     saveConfig(current);
-    console.log(`${pc.green('set')} ${key} = ${value}`);
-    console.log(`${pc.dim(`Saved to ${CONFIG_PATH}`)}`);
+    console.log(`${colors.green('set')} ${key} = ${value}`);
+    console.log(`${colors.dim(`Saved to ${CONFIG_PATH}`)}`);
     return;
   }
 
@@ -24,15 +24,15 @@ export async function cmdConfig(positional: string[], _flags: Record<string, unk
     const current = loadConfig();
     const keys = Object.keys(current);
     if (keys.length === 0) {
-      console.log(pc.dim('No configuration set. Defaults in use.'));
-      console.log(pc.dim(`  api-url = ${API_BASE}  (default)`));
+      console.log(colors.dim('No configuration set. Defaults in use.'));
+      console.log(colors.dim(`  api-url = ${API_BASE}  (default)`));
       return;
     }
-    console.log(pc.bold('Current configuration:'));
+    console.log(colors.bold('Current configuration:'));
     for (const k of keys) {
-      console.log(`  ${pc.cyan(k)} = ${current[k]}`);
+      console.log(`  ${colors.cyan(k)} = ${current[k]}`);
     }
-    console.log(pc.dim(`\nLoaded from ${CONFIG_PATH}`));
+    console.log(colors.dim(`\nLoaded from ${CONFIG_PATH}`));
     return;
   }
 

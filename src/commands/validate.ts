@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import pc from 'picocolors';
+import { colors } from '../cli/colors';
 import { validateManifest, MANIFEST_PATH } from '@agent-root/core';
 import { fatal } from '../cli/fatal';
 import { RECORD_TYPES } from '../constants/record-types';
@@ -28,7 +28,7 @@ export async function cmdValidate(positional: string[], _flags: Record<string, u
   const { valid, errors } = validateManifest(manifest);
 
   if (valid) {
-    console.log(`${pc.green('valid')} ${filePath}\n`);
+    console.log(`${colors.green('valid')} ${filePath}\n`);
     console.log(`  domain:  ${manifest.domain as string}`);
     const records = manifest.records as Array<Record<string, unknown>>;
     console.log(`  records: ${records.length}`);
@@ -45,9 +45,9 @@ export async function cmdValidate(positional: string[], _flags: Record<string, u
     if (subdomains) console.log(`  subdomains: ${subdomains.join(', ')}`);
     console.log();
   } else {
-    console.log(`${pc.red('invalid')} ${filePath}\n`);
+    console.log(`${colors.red('invalid')} ${filePath}\n`);
     for (const e of errors) {
-      console.log(`  ${pc.red('-')} ${e}`);
+      console.log(`  ${colors.red('-')} ${e}`);
     }
     console.log();
     process.exit(1);

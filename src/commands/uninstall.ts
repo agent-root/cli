@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import pc from 'picocolors';
+import { colors } from '../cli/colors';
 import { readInstalledState, removeInstalledState } from '@agent-root/core';
 import { fatal } from '../cli/fatal';
 import { confirmAction } from '../cli/confirm';
@@ -21,14 +21,14 @@ export async function cmdUninstall(positional: string[], flags: Record<string, u
       fatal('Usage: agentroot uninstall <domain>/<record-id>', 'Example: agentroot uninstall nameyard.io/nameyard-billing');
     }
 
-    console.log(`\n  ${pc.bold('Installed records:')}`);
+    console.log(`\n  ${colors.bold('Installed records:')}`);
     for (let i = 0; i < allKeys.length; i++) {
       const k = allKeys[i] as string;
       const entry = state.installed[k];
       if (!entry) continue;
       const toolCount = Object.keys(entry.tools).length;
       const typeLabel = labelForType(entry.type);
-      console.log(`  ${pc.dim((i + 1) + '.')} ${pc.bold(entry.record_id)} ${pc.dim(`[${typeLabel}]`)} ${pc.dim(`(${entry.domain})`)} ${pc.dim(`(${toolCount} tool${toolCount !== 1 ? 's' : ''})`)}`);
+      console.log(`  ${colors.dim((i + 1) + '.')} ${colors.bold(entry.record_id)} ${colors.dim(`[${typeLabel}]`)} ${colors.dim(`(${entry.domain})`)} ${colors.dim(`(${toolCount} tool${toolCount !== 1 ? 's' : ''})`)}`);
     }
     console.log();
 
@@ -93,21 +93,21 @@ export async function cmdUninstall(positional: string[], flags: Record<string, u
         fs.rmSync(toolEntry.path, { recursive: true, force: true });
       }
       removedList.push({ tool: toolName, path: toolEntry.path, link_type: toolEntry.link_type });
-      if (!flags['json']) console.log(`${pc.green('removed')} ${toolName}: ${toolEntry.path}`);
+      if (!flags['json']) console.log(`${colors.green('removed')} ${toolName}: ${toolEntry.path}`);
     }
 
     const canonicalDir = path.join(os.homedir(), '.agents', 'skills', domain, recordId);
     if (fs.existsSync(canonicalDir)) {
       fs.rmSync(canonicalDir, { recursive: true, force: true });
     }
-    if (!flags['json']) console.log(`${pc.green('removed')} canonical: ${canonicalDir}`);
+    if (!flags['json']) console.log(`${colors.green('removed')} canonical: ${canonicalDir}`);
 
     removeInstalledState(domain, recordId);
 
     if (flags['json']) {
       console.log(JSON.stringify({ status: 'success', removed: removedList, canonical: canonicalDir }));
     } else {
-      console.log(`\n${pc.green('✓')} ${key} uninstalled (${removedList.length} tool copies removed)`);
+      console.log(`\n${colors.green('✓')} ${key} uninstalled (${removedList.length} tool copies removed)`);
     }
   } catch (err) {
     fatal(`Failed to uninstall ${key}: ${(err as Error).message}`, 'Check file permissions and try again');

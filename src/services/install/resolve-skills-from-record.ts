@@ -1,4 +1,4 @@
-import pc from 'picocolors';
+import { colors } from '../../cli/colors';
 import { fetchJSON } from '../http/fetch';
 import { maybeSpinner } from '../../cli/spinner';
 import { extractSkillUrl, extractSkillId, extractSkillName } from './skill-extractors';
@@ -54,7 +54,7 @@ export async function resolveSkillsFromRecord(opts: ResolveSkillsFromRecordOptio
       indexSpinner.success({ text: 'Loaded skill index' });
     } catch (err) {
       indexSpinner.error({ text: 'Could not fetch skill index' });
-      console.log(`${pc.yellow('warning')} Could not fetch skill index: ${(err as Error).message}`);
+      console.log(`${colors.yellow('warning')} Could not fetch skill index: ${(err as Error).message}`);
     }
   }
 
