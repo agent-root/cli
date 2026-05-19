@@ -101,4 +101,41 @@ describe('CLI integration smoke', () => {
     expect(res.code).toBe(0);
     expect(res.stdout).toMatch(/CLI for the AgentRoot protocol/);
   });
+
+  it('version --json returns expected envelope', () => {
+    const res = run(['version', '--json']);
+    expect(res.code).toBe(0);
+    const parsed = JSON.parse(res.stdout);
+    expect(parsed.agentRoot).toMatch(/^\d+\.\d+\.\d+/);
+    expect(typeof parsed.node).toBe('string');
+    expect(typeof parsed.os).toBe('string');
+    expect(typeof parsed.api).toBe('string');
+    expect(typeof parsed.config).toBe('string');
+  });
+
+  it('config (no args) exits 0', () => {
+    const res = run(['config']);
+    expect(res.code).toBe(0);
+  });
+
+  it('health returns exit 0 or 69 (network-dependent)', () => {
+    const res = run(['health']);
+    // Either the registry is reachable (0) or the test env has no
+    // network access (69 UNAVAILABLE / 68 NOHOST). Reject anything else.
+    expect([0, 68, 69]).toContain(res.code);
+  });
+
+  it('completion bash outputs a function definition', () => {
+    const res = run(['completion', 'bash']);
+    expect(res.code).toBe(0);
+    expect(res.stdout).toMatch(/_agent_root|_agentroot/);
+    expect(res.stdout).toMatch(/complete -F/);
+  });
+
+  it('unknown command emits "did you mean" hint', () => {
+    const res = run(['reslove']);
+    expect(res.code).toBe(2);
+    // The suggestion lands on stderr alongside the Unknown command line.
+    expect(res.stderr.toLowerCase()).toMatch(/did you mean|resolve/);
+  });
 });
