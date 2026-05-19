@@ -10,10 +10,39 @@ import { type SearchResult } from './search';
 import { installMcp, installAgent, type JsonOut } from './install';
 import { installSkill } from '../services/install/install-skill';
 
+/** Human-readable display names for each supported AI tool. */
+const TOOL_LABELS: Record<string, string> = {
+  claude: 'Claude Code',
+  cursor: 'Cursor',
+  codex: 'Codex CLI',
+  gemini: 'Gemini CLI',
+  agents: 'Cross-tool (~/.agents/)',
+};
+
+/** Install paths shown to the user when displaying detected tools. */
+const TOOL_PATHS: Record<string, string> = {
+  claude: '~/.claude/skills/',
+  cursor: '.cursor/skills/',
+  codex: '~/.codex/skills/',
+  gemini: '~/.gemini/skills/',
+  agents: '~/.agents/skills/',
+};
+
+/** Ordered list of tools shown in the detection table (skips the cross-tool sink). */
+const DETECTABLE_TOOLS: readonly string[] = ['claude', 'cursor', 'codex', 'gemini'];
+
+/**
+ * Per-tool MCP config file path. `cursor` is project-local; everything else is
+ * under the user's home directory. Computed at module load to keep the
+ * interactive prompt branch free of side-effecty setup.
+ */
+const MCP_CONFIG_PATHS: Record<string, string> = {
+  claude: path.join(os.homedir(), '.claude', 'settings.json'),
+  cursor: path.join('.cursor', 'mcp.json'),
+  codex: path.join(os.homedir(), '.codex', 'config.json'),
+};
+
 async function promptToolSelect(flags: Record<string, unknown>): Promise<string[]> {
-  const toolLabels: Record<string, string> = { claude: 'Claude Code', cursor: 'Cursor', codex: 'Codex CLI', gemini: 'Gemini CLI', agents: 'Cross-tool (~/.agents/)' };
-  const toolPaths: Record<string, string> = { claude: '~/.claude/skills/', cursor: '.cursor/skills/', codex: '~/.codex/skills/', gemini: '~/.gemini/skills/', agents: '~/.agents/skills/' };
-  const allTools = ['claude', 'cursor', 'codex', 'gemini'];
   const detected = detectTools();
 
   if (detected.length === 0) {
@@ -22,11 +51,11 @@ async function promptToolSelect(flags: Record<string, unknown>): Promise<string[
   }
 
   console.log(`\n  ${pc.bold('Detected AI tools on your machine:')}`);
-  for (const t of allTools) {
+  for (const t of DETECTABLE_TOOLS) {
     const found = detected.includes(t);
     const icon = found ? pc.green('[+]') : pc.dim('[ ]');
-    const label = found ? toolLabels[t] : pc.dim((toolLabels[t] ?? t) + ' (not detected)');
-    const p = found ? pc.dim(`(${toolPaths[t] ?? ''})`) : '';
+    const label = found ? TOOL_LABELS[t] : pc.dim((TOOL_LABELS[t] ?? t) + ' (not detected)');
+    const p = found ? pc.dim(`(${TOOL_PATHS[t] ?? ''})`) : '';
     console.log(`    ${icon} ${label}  ${p}`);
   }
   console.log();
@@ -38,7 +67,7 @@ async function promptToolSelect(flags: Record<string, unknown>): Promise<string[
     checkbox: (opts: { message: string; choices: Array<{ name: string; value: string; checked: boolean }> }) => Promise<string[]>
   };
 
-  const choices = detected.map(t => ({ name: `${toolLabels[t] ?? t}   ${pc.dim(toolPaths[t] ?? '')}`, value: t, checked: true }));
+  const choices = detected.map(t => ({ name: `${TOOL_LABELS[t] ?? t}   ${pc.dim(TOOL_PATHS[t] ?? '')}`, value: t, checked: true }));
 
   let selected: string[];
   try {
@@ -81,11 +110,6 @@ export async function promptInstallFromResult(result: SearchResult, flags: Recor
     if (tools.length === 0) return;
     installMcp(domain, recordId, result as unknown as Record<string, unknown>, flags, jsonOut);
 
-    const MCP_CONFIG_PATHS: Record<string, string> = {
-      claude: path.join(os.homedir(), '.claude', 'settings.json'),
-      cursor: path.join('.cursor', 'mcp.json'),
-      codex: path.join(os.homedir(), '.codex', 'config.json'),
-    };
     for (const tool of tools) {
       const configPath = MCP_CONFIG_PATHS[tool];
       if (!configPath) continue;

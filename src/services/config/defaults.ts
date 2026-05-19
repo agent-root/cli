@@ -6,18 +6,24 @@ import { scanInstalled } from '@agent-root/core';
 import { installSkill } from '../install/install-skill.js';
 import type { JsonOut } from '../../types/install.js';
 
+// --- types ---
+
+interface DefaultSkill {
+  readonly domain: string;
+  readonly id: string;
+  readonly name: string;
+  readonly skill_md: string;
+  readonly description: string;
+}
+
+// --- constants ---
+
 /**
  * Skills that ship with AgentRoot and are auto-installed on first use.
  * These are universal skills that every user benefits from.
  * The URLs are stable — the skill content is maintained by the publishers.
  */
-const DEFAULT_SKILLS: Array<{
-  domain: string;
-  id: string;
-  name: string;
-  skill_md: string;
-  description: string;
-}> = [
+const DEFAULT_SKILLS: readonly DefaultSkill[] = [
   {
     domain: 'doma.xyz',
     id: 'secondary-sales',
@@ -27,16 +33,10 @@ const DEFAULT_SKILLS: Array<{
   },
 ];
 
+/** Sentinel file under `~/.agents/` proving defaults have already run. */
 const DEFAULTS_MARKER = path.join(os.homedir(), '.agents', '.defaults-installed');
 
-function alreadyInstalled(): boolean {
-  return fs.existsSync(DEFAULTS_MARKER);
-}
-
-function markInstalled(): void {
-  fs.mkdirSync(path.dirname(DEFAULTS_MARKER), { recursive: true });
-  fs.writeFileSync(DEFAULTS_MARKER, JSON.stringify({ installed_at: new Date().toISOString(), skills: DEFAULT_SKILLS.map(s => s.id) }));
-}
+// --- public entry point ---
 
 /**
  * Install default skills if not already installed.
@@ -90,4 +90,15 @@ export async function ensureDefaults(flags: Record<string, unknown>): Promise<vo
   if (!quiet) {
     console.log(`${pc.dim('Done. Use `agentroot list` to see installed skills.')}\n`);
   }
+}
+
+// --- private helpers ---
+
+function alreadyInstalled(): boolean {
+  return fs.existsSync(DEFAULTS_MARKER);
+}
+
+function markInstalled(): void {
+  fs.mkdirSync(path.dirname(DEFAULTS_MARKER), { recursive: true });
+  fs.writeFileSync(DEFAULTS_MARKER, JSON.stringify({ installed_at: new Date().toISOString(), skills: DEFAULT_SKILLS.map(s => s.id) }));
 }

@@ -1,7 +1,7 @@
 import os from 'node:os';
 import pc from 'picocolors';
 import { readInstalledState } from '@agent-root/core';
-import { RECORD_TYPES } from '../constants/record-types';
+import { labelForType } from '../constants/record-types';
 
 export async function cmdList(_positional: string[], flags: Record<string, unknown>): Promise<void> {
   // readInstalledState reads the canonical ~/.agentroot/installed.json and
@@ -28,7 +28,7 @@ export async function cmdList(_positional: string[], flags: Record<string, unkno
   for (const key of keys) {
     const entry = entries[key];
     if (!entry) continue;
-    const typeLabel = RECORD_TYPES[entry.type] ?? entry.type ?? 'skill';
+    const typeLabel = labelForType(entry.type);
     console.log(`  ${pc.bold(entry.record_id)} ${pc.dim(`[${typeLabel}]`)} ${pc.dim(`(${entry.domain})`)}`);
     console.log(`  ${pc.dim('installed:')} ${entry.installed_at ? entry.installed_at.split('T')[0] : 'unknown'}  ${pc.dim('hash:')} ${entry.version_hash ?? 'n/a'}`);
     for (const [tool, info] of Object.entries(entry.tools)) {

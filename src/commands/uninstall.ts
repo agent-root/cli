@@ -5,7 +5,7 @@ import pc from 'picocolors';
 import { readInstalledState, removeInstalledState } from '@agent-root/core';
 import { fatal } from '../cli/fatal';
 import { confirmAction } from '../cli/confirm';
-import { RECORD_TYPES } from '../constants/record-types';
+import { labelForType } from '../constants/record-types';
 
 export async function cmdUninstall(positional: string[], flags: Record<string, unknown>): Promise<void> {
   const state = readInstalledState();
@@ -27,7 +27,7 @@ export async function cmdUninstall(positional: string[], flags: Record<string, u
       const entry = state.installed[k];
       if (!entry) continue;
       const toolCount = Object.keys(entry.tools).length;
-      const typeLabel = RECORD_TYPES[entry.type] ?? entry.type ?? 'skill';
+      const typeLabel = labelForType(entry.type);
       console.log(`  ${pc.dim((i + 1) + '.')} ${pc.bold(entry.record_id)} ${pc.dim(`[${typeLabel}]`)} ${pc.dim(`(${entry.domain})`)} — ${toolCount} tool${toolCount !== 1 ? 's' : ''}`);
     }
     console.log();

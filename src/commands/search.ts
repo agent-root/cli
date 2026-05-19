@@ -6,6 +6,13 @@ import { maybeSpinner } from '../cli/spinner';
 import { confirmAction } from '../cli/confirm';
 import { RECORD_TYPES } from '../constants/record-types';
 
+/**
+ * When the user types a bare keyword without a dot (e.g. `agentroot search billing`),
+ * we try treating it as a domain by appending common TLDs in priority order.
+ * `.io` first because most AI-native domains live there; `.com` as final fallback.
+ */
+const BARE_KEYWORD_TLDS: readonly string[] = ['.io', '.com'];
+
 export interface SearchResult {
   domain: string;
   type: string;
@@ -71,7 +78,9 @@ export async function searchWithFallback(query: string, typeFilter: string, flag
   // we race them in parallel and pick the first non-empty result in priority
   // order. Previously this ran sequentially: two cold round-trips on a miss.
   if (results.length === 0) {
-    const domains = query.includes('.') ? [query] : [`${query}.io`, `${query}.com`];
+    const domains = query.includes('.')
+      ? [query]
+      : BARE_KEYWORD_TLDS.map(tld => `${query}${tld}`);
     const settled = await Promise.all(domains.map(async (d) => {
       try {
         const data = await fetchJSON<{ manifest?: ManifestData } & ManifestData>(`${getApiBase()}/api/manifests/${encodeURIComponent(d)}`);
