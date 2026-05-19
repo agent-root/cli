@@ -1,7 +1,7 @@
 import pc from 'picocolors';
 import { validateManifest, parseAllTxt, getHandler, type ParsedRecord } from '@agent-root/core';
 import { fetchJSON } from '../services/http/fetch';
-import { dnsLookupTxt, resolveAgentroot } from '../services/dns/dns-service';
+import { resolveAgentroot } from '../services/dns/dns-service';
 import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
 import { formatRecord } from '../utils/format-record';
@@ -183,18 +183,13 @@ export async function cmdResolve(positional: string[], flags: Record<string, unk
     return;
   }
 
-  // For non-manifest modes (skill / inline / multiple), re-fetch all TXT records
-  // and use the registry's parseAllTxt — fixes the multi-record bug where
+  // For non-manifest modes (skill / inline / multiple), reuse the TXT records
+  // already fetched by resolveAgentroot — the previous code did a second
+  // identical DNS lookup here, which added one full round-trip to every
+  // non-manifest resolve. parseAllTxt then fixes the multi-record bug where
   // domains publishing both a skill and a payment record (e.g. rides.com)
   // previously returned only the first.
-  let txtRecords: string[];
-  try {
-    txtRecords = await dnsLookupTxt(`_agentroot.${domain}`);
-  } catch (err) {
-    spinner.error({ text: (err as Error).message });
-    fatal(`DNS lookup failed: ${(err as Error).message}`);
-  }
-
+  const txtRecords = result.txtRecords;
   spinner.success({ text: `Found ${txtRecords.length} TXT record(s) at _agentroot.${domain}` });
   await handleMultiRecordDns(domain, txtRecords, flags);
 }

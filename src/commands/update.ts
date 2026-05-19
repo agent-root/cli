@@ -21,26 +21,42 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
     }
 
     console.log(`${pc.bold('Checking ' + allKeys.length + ' installed record(s)...')}\n`);
-    let updated = 0, upToDate = 0, failed = 0;
 
-    for (const key of allKeys) {
+    // Fetch every installed record's source in parallel — for N installed
+    // skills this turns N sequential round-trips into one round-trip total.
+    // We still print per-record results in deterministic key order below.
+    type FetchOutcome =
+      | { kind: 'skip'; key: string }
+      | { kind: 'fail'; key: string; message: string }
+      | { kind: 'fetched'; key: string; entry: InstalledEntry; content: string };
+    const outcomes = await Promise.all(allKeys.map(async (key): Promise<FetchOutcome> => {
       const entry = state.installed[key];
-      if (!entry) continue;
+      if (!entry) return { kind: 'skip', key };
       const sourceUrl = entry.source_url;
-      if (!sourceUrl) {
-        console.log(`  ${pc.yellow('skip')} ${key} — no source_url`);
+      if (!sourceUrl) return { kind: 'skip', key };
+      try {
+        const content = await fetch(sourceUrl);
+        return { kind: 'fetched', key, entry, content };
+      } catch (err) {
+        return { kind: 'fail', key, message: (err as Error).message };
+      }
+    }));
+
+    let updated = 0, upToDate = 0, failed = 0;
+    for (const outcome of outcomes) {
+      if (outcome.kind === 'skip') {
+        const entry = state.installed[outcome.key];
+        if (entry && !entry.source_url) {
+          console.log(`  ${pc.yellow('skip')} ${outcome.key} — no source_url`);
+        }
         continue;
       }
-
-      let content: string;
-      try {
-        content = await fetch(sourceUrl);
-      } catch (err) {
-        console.log(`  ${pc.red('fail')} ${key} — ${(err as Error).message}`);
+      if (outcome.kind === 'fail') {
+        console.log(`  ${pc.red('fail')} ${outcome.key} — ${outcome.message}`);
         failed++;
         continue;
       }
-
+      const { key, entry, content } = outcome;
       const newHash = hashContent(content);
       if (newHash === entry.version_hash) {
         console.log(`  ${pc.green('✓')} ${key} — up to date`);

@@ -66,36 +66,45 @@ export async function searchWithFallback(query: string, typeFilter: string, flag
     } catch {}
   }
 
-  // 3. Fallback: manifests API
+  // 3. Fallback: manifests API. When the user typed a bare keyword we try
+  // `<keyword>.io` and `<keyword>.com` — these are independent lookups, so
+  // we race them in parallel and pick the first non-empty result in priority
+  // order. Previously this ran sequentially: two cold round-trips on a miss.
   if (results.length === 0) {
     const domains = query.includes('.') ? [query] : [`${query}.io`, `${query}.com`];
-    for (const d of domains) {
+    const settled = await Promise.all(domains.map(async (d) => {
       try {
         const data = await fetchJSON<{ manifest?: ManifestData } & ManifestData>(`${getApiBase()}/api/manifests/${encodeURIComponent(d)}`);
-        const manifest: ManifestData = data.manifest ?? data;
-        const recs = manifest.records ?? [];
-        if (recs.length > 0) {
-          const filtered = typeFilter ? recs.filter(r => r.type === typeFilter) : recs;
-          for (const r of filtered) {
-            const rid = String(r.record_id ?? r.id ?? '');
-            const raw = r.raw_record ?? {};
-            results.push({
-              domain: manifest.domain ?? d,
-              type: String(r.type ?? 'skill'),
-              id: rid,
-              name: String(r.name ?? rid),
-              description: String(r.description ?? ''),
-              address: `${manifest.domain ?? d}/${rid}`,
-              verified: manifest.status === 'active',
-              skill_md: (raw['skill_md'] ?? r['skill_md' as keyof ManifestRecord] ?? null) as string | null,
-              endpoint: (r.endpoint ?? raw['endpoint'] ?? null) as string | null,
-              transport: (r.transport ?? raw['transport'] ?? null) as string | null,
-              index: (raw['index'] ?? null) as string | null,
-            });
-          }
-          if (results.length > 0) break;
-        }
-      } catch {}
+        return { d, data };
+      } catch {
+        return null;
+      }
+    }));
+    for (const entry of settled) {
+      if (!entry) continue;
+      const { d, data } = entry;
+      const manifest: ManifestData = data.manifest ?? data;
+      const recs = manifest.records ?? [];
+      if (recs.length === 0) continue;
+      const filtered = typeFilter ? recs.filter(r => r.type === typeFilter) : recs;
+      for (const r of filtered) {
+        const rid = String(r.record_id ?? r.id ?? '');
+        const raw = r.raw_record ?? {};
+        results.push({
+          domain: manifest.domain ?? d,
+          type: String(r.type ?? 'skill'),
+          id: rid,
+          name: String(r.name ?? rid),
+          description: String(r.description ?? ''),
+          address: `${manifest.domain ?? d}/${rid}`,
+          verified: manifest.status === 'active',
+          skill_md: (raw['skill_md'] ?? r['skill_md' as keyof ManifestRecord] ?? null) as string | null,
+          endpoint: (r.endpoint ?? raw['endpoint'] ?? null) as string | null,
+          transport: (r.transport ?? raw['transport'] ?? null) as string | null,
+          index: (raw['index'] ?? null) as string | null,
+        });
+      }
+      if (results.length > 0) break;
     }
   }
 

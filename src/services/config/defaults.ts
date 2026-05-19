@@ -38,10 +38,6 @@ function markInstalled(): void {
   fs.writeFileSync(DEFAULTS_MARKER, JSON.stringify({ installed_at: new Date().toISOString(), skills: DEFAULT_SKILLS.map(s => s.id) }));
 }
 
-function hasSkillInstalled(skillId: string): boolean {
-  return scanInstalled().some(s => s.record_id === skillId);
-}
-
 /**
  * Install default skills if not already installed.
  * Called once on first CLI usage. Skips silently if already done.
@@ -51,7 +47,11 @@ export async function ensureDefaults(flags: Record<string, unknown>): Promise<vo
   if (alreadyInstalled()) return;
 
   const quiet = !!flags.json;
-  const missing = DEFAULT_SKILLS.filter(s => !hasSkillInstalled(s.id));
+  // Scan the installed-state once and reuse for every default-skill check.
+  // Previously this filter called scanInstalled() once per default skill,
+  // which is O(N*M) filesystem work for N defaults and M installed records.
+  const installedIds = new Set(scanInstalled().map(s => s.record_id));
+  const missing = DEFAULT_SKILLS.filter(s => !installedIds.has(s.id));
 
   if (missing.length === 0) {
     markInstalled();

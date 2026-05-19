@@ -36,18 +36,26 @@ export async function installOneSkill(
     return 0;
   }
 
-  // Fetch supporting files referenced via relative links in SKILL.md
+  // Fetch supporting files referenced via relative links in SKILL.md.
+  // Done in parallel — these are independent network calls against the same
+  // origin and waiting for them serially can multiply install latency by 10x
+  // on skills with many supporting docs.
   const supportingPaths = parseSupportingFiles(content);
   const supportingFiles: Record<string, string> = {};
   if (supportingPaths.length > 0) {
     const baseUrl = skill.url.substring(0, skill.url.lastIndexOf('/') + 1);
-    for (const relPath of supportingPaths) {
+    const fetched = await Promise.all(supportingPaths.map(async (relPath) => {
       const fileUrl = new URL(relPath, baseUrl).href;
       try {
-        supportingFiles[relPath] = await fetch(fileUrl);
+        const body = await fetch(fileUrl);
+        return { relPath, body };
       } catch {
         // Skip files that can't be fetched (404, etc.)
+        return null;
       }
+    }));
+    for (const entry of fetched) {
+      if (entry) supportingFiles[entry.relPath] = entry.body;
     }
   }
 
