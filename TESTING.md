@@ -68,13 +68,113 @@ agent-root search payments
 ```
 
 Expected: exit `0`. Either prints records or `No records found` (both are
-correct — depends on what's in the live registry right now).
+correct, depending on what's in the live registry right now). When results
+exist, the last lines are a pagination footer:
+`Page 1 of N (showing X of Y results)`.
 
 ```bash
 agent-root search payments --json
 ```
 
-Expected: exit `0`. Valid JSON.
+Expected: exit `0`. Valid JSON. Top-level keys are
+`results`, `total`, `page`, `pages`, `limit`. This is the full envelope,
+not a bare array.
+
+```bash
+agent-root search doma --page 2 --limit 5 --json
+```
+
+Expected: exit `0`. `page=2`, `limit=5`, up to 5 entries in `results`.
+
+### stats
+
+```bash
+agent-root stats
+```
+
+Expected: exit `0`. Prints the `Agents`, `Skills`, and `By TLD` sections.
+
+```bash
+agent-root stats --json
+```
+
+Expected: exit `0`. Valid JSON with `agents`, `skills`, `byTld` keys.
+
+### health
+
+```bash
+agent-root health
+```
+
+Expected: exit `0` when the registry is up. Prints
+`status: ok` and `db: connected`. Exits `1` if the API is unreachable
+or reports a degraded state.
+
+```bash
+agent-root health --json
+```
+
+Expected: valid JSON.
+
+### manifests
+
+```bash
+agent-root manifests --limit 3
+```
+
+Expected: exit `0`. Three manifest rows, each showing domain, manifest
+URL, record counts, and verified date. Pagination footer at the end.
+
+```bash
+agent-root manifests --query doma --json
+```
+
+Expected: exit `0`. Valid JSON envelope with `manifests`, `total`,
+`page`, `pages`, `limit`.
+
+### collections
+
+```bash
+agent-root collections
+```
+
+Expected: exit `0`. At least one collection (`featured-domains`).
+
+```bash
+agent-root collections featured-domains
+```
+
+Expected: exit `0`. Heading + per-item rows with domain and manifest URL.
+
+```bash
+agent-root collections does-not-exist
+```
+
+Expected: exit `1`. Error message naming the missing slug.
+
+### submit
+
+```bash
+agent-root submit doma.xyz
+```
+
+Expected: exit `0`. `Found and indexed: ... records for doma.xyz`.
+The domain is already registered, so the registry re-verifies and
+re-indexes.
+
+```bash
+agent-root submit definitely-not-a-real-domain-xyz123.test
+```
+
+Expected: exit `1`. Prints `No _agentroot TXT record found ...`, then
+the exact TXT record to add and the spec link.
+
+```bash
+agent-root submit doma.xyz --json
+```
+
+Expected: exit `0`. Valid JSON with `success: true`, `records_indexed`,
+and the resolved manifest.
 
 ### validate
 
