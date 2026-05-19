@@ -6,26 +6,11 @@ import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
 import { RECORD_TYPES } from '../constants/record-types';
 import { searchWithFallback, selectResult, promptSearch, type SearchResult } from './search';
-import { installSkill } from './install-helpers';
+import { installSkill } from '../services/install/install-skill';
+import type { JsonOut } from '../types/install';
 
-export interface SkillMeta {
-  id: string;
-  name: string;
-  description: string;
-  url: string;
-  domain: string;
-}
-
-export interface JsonOut {
-  status: string;
-  domain: string;
-  recordId: string | null;
-  type: string | null;
-  installed: Array<Record<string, unknown>>;
-  skipped: Array<Record<string, unknown>>;
-  errors: Array<Record<string, unknown>>;
-  [key: string]: unknown;
-}
+// Re-exported for callers that still import these from this module.
+export type { SkillMeta, JsonOut } from '../types/install';
 
 export function installMcp(
   domain: string,

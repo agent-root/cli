@@ -8,7 +8,7 @@ import { confirmAction } from '../cli/confirm';
 import { RECORD_TYPES } from '../constants/record-types';
 import { type SearchResult } from './search';
 import { installMcp, installAgent, type JsonOut } from './install';
-import { installSkill } from './install-helpers';
+import { installSkill } from '../services/install/install-skill';
 
 async function promptToolSelect(flags: Record<string, unknown>): Promise<string[]> {
   const toolLabels: Record<string, string> = { claude: 'Claude Code', cursor: 'Cursor', codex: 'Codex CLI', gemini: 'Gemini CLI', agents: 'Cross-tool (~/.agents/)' };

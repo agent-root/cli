@@ -3,8 +3,8 @@ import path from 'node:path';
 import os from 'node:os';
 import pc from 'picocolors';
 import { scanInstalled } from '@agent-root/core';
-import { installSkill } from '../../commands/install-helpers.js';
-import type { JsonOut } from '../../commands/install.js';
+import { installSkill } from '../install/install-skill.js';
+import type { JsonOut } from '../../types/install.js';
 
 /**
  * Skills that ship with AgentRoot and are auto-installed on first use.

@@ -5,8 +5,8 @@ import { dnsLookupTxt, resolveAgentroot } from '../services/dns/dns-service';
 import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
 import { formatRecord } from '../utils/format-record';
-import { installSkill } from './install-helpers';
-import type { JsonOut } from './install';
+import { installSkill } from '../services/install/install-skill';
+import type { JsonOut } from '../types/install';
 
 // --- Per-record helpers using the registry ---
 
