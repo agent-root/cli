@@ -85,11 +85,6 @@ const recipes = [
     },
   },
   {
-    name: 'stats',
-    title: '$ agent-root stats',
-    argv: ['stats'],
-  },
-  {
     name: 'health',
     title: '$ agent-root health',
     argv: ['health'],

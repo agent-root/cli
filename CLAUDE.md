@@ -27,7 +27,6 @@ src/
     init.ts                 scaffold .well-known/agentroot.json
     validate.ts             validateManifest against a local JSON file
     config.ts               ~/.agentroot/config.json get/set/unset
-    stats.ts                /api/stats reader (counts + byTld)
     health.ts               /api/health reader (status + db)
     manifests.ts            /api/manifests paginated browser
     collections.ts          /api/collections list + detail
@@ -77,6 +76,8 @@ returns zero rows. `--json` now returns the full envelope
 **Document every empty `catch {}`** with a 2 or 3 line comment explaining what condition is being swallowed and why that's the right behavior.
 
 **Behavior parity with the monorepo CLI.** The standalone is a 1:1 functional copy of `packages/cli/` from `d3-inc/agentroot`. Output must match byte-for-byte (modulo timestamps).
+
+**Commits are authored by the human who wrote them.** Do NOT add `Co-Authored-By:` trailers for Claude, Copilot, Cursor, ChatGPT, or any other AI assistant. Do NOT add "🤖 Generated with..." footers. The developer or contributor sending the PR is the sole author; AI tooling that helped is not co-credited. This applies to every commit and every PR, no exceptions. (DCO sign-off via `git commit -s` is still required and adds only the contributor's own `Signed-off-by:` line.)
 
 **Exit codes are sysexits.** Every `fatal()` call must pass an `EXIT.*` constant from `src/cli/exit-codes.ts` (which is the single source of truth: `OK=0`, `GENERIC=1`, `USAGE=2`, `NOINPUT=66`, `NOHOST=68`, `UNAVAILABLE=69`, `PROTOCOL=76`, `NOPERM=77`, `CONFIG=78`). The default is `GENERIC` (1) — pick the more specific code if it applies. JSON errors put the symbolic name in `error.code` via `exitCodeName()`. Document new exit codes in per-command help pages **and** in the README's "Exit codes" table.
 

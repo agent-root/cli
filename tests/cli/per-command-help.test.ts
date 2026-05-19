@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   helpResolve, helpSearch, helpInstall, helpList, helpUpdate, helpUninstall,
-  helpInit, helpValidate, helpConfig, helpStats, helpHealth, helpManifests,
+  helpInit, helpValidate, helpConfig, helpHealth, helpManifests,
   helpCollections, helpSubmit, helpVersion,
 } from '../../src/commands/help';
 import { helpCompletion } from '../../src/commands/completion';
@@ -44,7 +44,6 @@ describe('per-command help', () => {
   it('helpInit prints init-specific page', makeHelpCase('init', helpInit, [/--domain/, /--force/]));
   it('helpValidate prints validate-specific page', makeHelpCase('validate', helpValidate));
   it('helpConfig prints config-specific page', makeHelpCase('config', helpConfig, [/api-url/]));
-  it('helpStats prints stats-specific page', makeHelpCase('stats', helpStats));
   it('helpHealth prints health-specific page', makeHelpCase('health', helpHealth));
   it('helpManifests prints manifests-specific page', makeHelpCase('manifests', helpManifests, [/--query/]));
   it('helpCollections prints collections-specific page', makeHelpCase('collections', helpCollections));
@@ -58,7 +57,7 @@ describe('per-command help', () => {
     // a single missing line is a real-user bug.
     const pages = [
       helpResolve, helpSearch, helpInstall, helpList, helpUpdate, helpUninstall,
-      helpInit, helpValidate, helpConfig, helpStats, helpHealth, helpManifests,
+      helpInit, helpValidate, helpConfig, helpHealth, helpManifests,
       helpCollections, helpSubmit, helpVersion, helpCompletion,
     ];
     for (const fn of pages) {

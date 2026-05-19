@@ -37,7 +37,6 @@ All notable changes to the `agent-root` CLI are documented in this file. Format 
 
 #### Pre-hardening (earlier in this milestone)
 
-- `agent-root stats` reads `/api/stats` for registry totals and per-TLD breakdown.
 - `agent-root health` reads `/api/health` and exits non-zero when the registry is unhealthy.
 - `agent-root manifests [--query] [--type] [--page] [--limit] [--all]` paginates `/api/manifests`.
 - `agent-root collections [<slug>]` browses curated collections (`/api/collections`).
@@ -61,6 +60,7 @@ All notable changes to the `agent-root` CLI are documented in this file. Format 
 
 ### Removed
 
+- `agent-root stats` command. Registry totals are a monitoring concern, not a CLI one; the `/api/stats` endpoint remains for dashboards.
 - Speculative `Roadmap` and `Acknowledgments` sections from README.
 - `/api/discover` call from `search` (response shape didn't match the parser and the endpoint caps at 100 anyway; `/api/records` supersedes it).
 

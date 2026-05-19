@@ -19,7 +19,7 @@
  */
 const COMMANDS = [
   'resolve', 'search', 'install', 'list', 'update', 'uninstall',
-  'init', 'validate', 'config', 'stats', 'health', 'manifests',
+  'init', 'validate', 'config', 'health', 'manifests',
   'collections', 'submit', 'version', 'completion', 'help',
 ] as const;
 

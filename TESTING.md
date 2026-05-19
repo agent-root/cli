@@ -86,20 +86,6 @@ agent-root search doma --page 2 --limit 5 --json
 
 Expected: exit `0`. `page=2`, `limit=5`, up to 5 entries in `results`.
 
-### stats
-
-```bash
-agent-root stats
-```
-
-Expected: exit `0`. Prints the `Agents`, `Skills`, and `By TLD` sections.
-
-```bash
-agent-root stats --json
-```
-
-Expected: exit `0`. Valid JSON with `agents`, `skills`, `byTld` keys.
-
 ### health
 
 ```bash

@@ -16,7 +16,6 @@ import { cmdUninstall } from './commands/uninstall';
 import { cmdInit } from './commands/init';
 import { cmdValidate } from './commands/validate';
 import { cmdConfig } from './commands/config';
-import { cmdStats } from './commands/stats';
 import { cmdHealth } from './commands/health';
 import { cmdManifests } from './commands/manifests';
 import { cmdCollections } from './commands/collections';
@@ -25,7 +24,7 @@ import { cmdVersion, printShortVersion } from './commands/version';
 import { cmdCompletion, helpCompletion } from './commands/completion';
 import {
   helpResolve, helpSearch, helpInstall, helpList, helpUpdate, helpUninstall,
-  helpInit, helpValidate, helpConfig, helpStats, helpHealth, helpManifests,
+  helpInit, helpValidate, helpConfig, helpHealth, helpManifests,
   helpCollections, helpSubmit, helpVersion,
 } from './commands/help';
 import { parseArgs, applyEnvDefaults } from './cli/parse-args';
@@ -49,7 +48,6 @@ const PER_COMMAND_HELP: Record<string, () => void> = {
   init: helpInit,
   validate: helpValidate,
   config: helpConfig,
-  stats: helpStats,
   health: helpHealth,
   manifests: helpManifests,
   collections: helpCollections,
@@ -81,7 +79,6 @@ ${colors.bold('PUBLISH')}
   ${colors.cyan('submit')}   <domain>                 Submit a domain to the public registry
 
 ${colors.bold('REGISTRY')}
-  ${colors.cyan('stats')}                              Registry counts (agents, skills, by TLD)
   ${colors.cyan('health')}                             Probe the registry API
   ${colors.cyan('manifests')} [--query <q>]            List registered manifests
   ${colors.cyan('collections')} [<slug>]               Browse curated collections
@@ -143,7 +140,6 @@ ${colors.bold('EXAMPLES')}
   npx agent-root submit mycompany.com
 
   ${colors.dim('# Browse the registry')}
-  npx agent-root stats
   npx agent-root manifests --query doma
   npx agent-root collections featured-domains
 
@@ -247,9 +243,6 @@ export async function main(): Promise<void> {
         break;
       case 'config':
         await cmdConfig(positional, flags);
-        break;
-      case 'stats':
-        await cmdStats(positional, flags);
         break;
       case 'health':
         await cmdHealth(positional, flags);

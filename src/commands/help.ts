@@ -286,30 +286,6 @@ ${section('EXIT CODES')}
   2   Unknown subcommand or missing key/value (USAGE)`);
 }
 
-export function helpStats(): void {
-  page(`${section('agentroot stats')} - Registry counts
-
-${section('USAGE')}
-  agentroot stats [options]
-
-${section('DESCRIPTION')}
-  Fetches /api/stats and prints totals for agents and skills (active,
-  pending, failed), plus a breakdown of registered domains by TLD.
-
-${section('OPTIONS')}
-  --json, -j        Output as JSON envelope
-  --no-color        Disable ANSI color
-  --quiet, -q       Suppress progress chatter
-
-${section('EXAMPLES')}
-  agentroot stats
-  agentroot stats --json | jq '.byTld'
-
-${section('EXIT CODES')}
-  0   Stats retrieved
-  69  Registry unreachable (UNAVAILABLE)`);
-}
-
 export function helpHealth(): void {
   page(`${section('agentroot health')} - Probe the registry API
 

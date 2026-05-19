@@ -93,6 +93,12 @@ git commit -s -m "feat: your message"
 
 This appends a `Signed-off-by: Your Name <your.email@example.com>` line.
 
+## No AI co-authorship
+
+You are the author of your commits. Please do not add `Co-Authored-By:` trailers crediting Claude, Copilot, Cursor, ChatGPT, or any other AI assistant. The same applies to "Generated with..." footers in commit messages or PR descriptions. If you used AI tooling to draft a change, that is your choice as the author; the tool is not a co-author.
+
+The `Signed-off-by:` line from `git commit -s` should be the only trailer on the commit.
+
 ## PR checklist
 
 Before requesting review:

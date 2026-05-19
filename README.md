@@ -21,7 +21,7 @@ The command-line client for the **AgentRoot protocol**. Resolve domains to disco
   - [Install a skill into your project](#install-a-skill-into-your-project)
   - [Manage what you have installed](#manage-what-you-have-installed)
   - [Publish your own manifest](#publish-your-own-manifest)
-  - [Browse, stats, and submit](#browse-stats-and-submit)
+  - [Browse and health-check the registry](#browse-and-health-check-the-registry)
 - [How it works](#how-it-works)
   - [Exit codes](#exit-codes)
 - [Configuration](#configuration)
@@ -65,7 +65,6 @@ The protocol specification and public registry live at [agentroot.io](https://ag
 | Scaffold a new manifest to publish | `agent-root init --domain <yours>` | `.well-known/agentroot.json` template written |
 | Validate a manifest before publishing | `agent-root validate <file>` | "valid" or a list of specific errors |
 | Submit a domain to the public registry | `agent-root submit <domain>` | Triggers DNS verification and indexing |
-| See registry totals at a glance | `agent-root stats` | Agent/skill counts, by-TLD breakdown |
 | Confirm the registry is up | `agent-root health` | `status: ok`, `db: connected`, exits non-zero if not |
 | Browse every registered manifest | `agent-root manifests` | Paginated list with domain, manifest URL, record counts |
 | Browse curated collections | `agent-root collections` | List collections or open one by slug |
@@ -112,7 +111,6 @@ PUBLISH
   submit   <domain>                 Submit a domain to the public registry
 
 REGISTRY
-  stats                             Registry counts (agents, skills, by TLD)
   health                            Probe the registry API
   manifests [--query <q>]           List registered manifests (paginated)
   collections [<slug>]              Browse curated collections
@@ -395,19 +393,9 @@ If DNS is not set up yet, `submit` prints the exact TXT record to add and exits 
 
 Pass `--manifest-url` to skip the DNS probe and submit a known URL directly. Use `--json` to consume the structured response (validation errors, instructions block, indexed records).
 
-### Browse, stats, and submit
+### Browse and health-check the registry
 
 Quick reads against the registry that mirror what the web UI shows.
-
-#### Registry stats
-
-```bash
-agent-root stats
-```
-
-![](docs/screenshots/stats.png)
-
-`--json` returns the same payload the UI's overview cards consume.
 
 #### Health check
 
@@ -484,7 +472,7 @@ Both forms accept `--json` for scripting.
 2. If page 1 came back empty, it falls back to `/api/find-skills` (legacy, skill-only)
 3. If still nothing and the query is a bare keyword, it treats it as a domain by appending `.io` then `.com` and looks up the manifest directly
 
-The public registry at [agentroot.io](https://agentroot.io) is a convenience for `search`, `stats`, `health`, `manifests`, `collections`, and `submit`, not a dependency for the core protocol. `resolve`, `install`, `update`, and `uninstall` all work even if the registry is offline, because they go through DNS.
+The public registry at [agentroot.io](https://agentroot.io) is a convenience for `search`, `health`, `manifests`, `collections`, and `submit`, not a dependency for the core protocol. `resolve`, `install`, `update`, and `uninstall` all work even if the registry is offline, because they go through DNS.
 
 ### Exit codes
 
@@ -550,7 +538,7 @@ The CLI reads the following environment variables (precedence: explicit flag > n
 
 Explicit flags always win. For example, `CI=true agent-root install foo --no-yes` still prompts, because `--no-yes` was typed.
 
-No API key is required. The endpoints the CLI calls are public-read (`/api/records`, `/api/manifests`, `/api/manifests/{domain}`, `/api/find-skills`, `/api/stats`, `/api/health`, `/api/collections`, `/api/collections/{slug}`) plus one public-write (`/api/submit`, which the registry verifies via DNS before indexing).
+No API key is required. The endpoints the CLI calls are public-read (`/api/records`, `/api/manifests`, `/api/manifests/{domain}`, `/api/find-skills`, `/api/health`, `/api/collections`, `/api/collections/{slug}`) plus one public-write (`/api/submit`, which the registry verifies via DNS before indexing).
 
 ### Shell completion
 
