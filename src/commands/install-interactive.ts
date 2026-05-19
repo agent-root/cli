@@ -10,6 +10,8 @@ import { type SearchResult } from './search';
 import { installMcp, installAgent, type JsonOut } from './install';
 import { installSkill } from '../services/install/install-skill';
 
+// --- constants ---
+
 /** Human-readable display names for each supported AI tool. */
 const TOOL_LABELS: Record<string, string> = {
   claude: 'Claude Code',
@@ -41,6 +43,201 @@ const MCP_CONFIG_PATHS: Record<string, string> = {
   cursor: path.join('.cursor', 'mcp.json'),
   codex: path.join(os.homedir(), '.codex', 'config.json'),
 };
+
+/** Result types that share the agent/a2a/payment summary block. */
+const AGENT_LIKE_TYPES: ReadonlySet<string> = new Set(['agent', 'a2a', 'payment']);
+
+// --- public: entry point ---
+
+export async function promptInstallFromResult(result: SearchResult, flags: Record<string, unknown>): Promise<void> {
+  const domain = result.domain;
+  const recordId = (result.id || result.record_id) as string;
+  const jsonOut: JsonOut = { status: 'success', domain, recordId, type: result.type, installed: [], skipped: [], errors: [] };
+
+  // Phase 1: install (or skip, on tool-prompt cancellation).
+  const installAction = INSTALL_ACTIONS[result.type] ?? installAgentLike;
+  const proceed = await installAction({ result, domain, recordId, flags, jsonOut });
+  if (!proceed) return;
+
+  // Phase 2: print the per-type summary footer.
+  printSummary(result, domain, recordId, jsonOut);
+
+  if (flags['json']) {
+    console.log(JSON.stringify(jsonOut, null, 2));
+  }
+}
+
+// --- private: phase 1 — install actions ---
+
+interface InstallActionContext {
+  result: SearchResult;
+  domain: string;
+  recordId: string;
+  flags: Record<string, unknown>;
+  jsonOut: JsonOut;
+}
+
+/** Return `false` to abort the entire flow (e.g. user picked no tools). */
+type InstallAction = (ctx: InstallActionContext) => Promise<boolean>;
+
+const installSkillFromResult: InstallAction = async ({ result, domain, recordId, flags, jsonOut }) => {
+  const tools = await promptToolSelect(flags);
+  if (tools.length === 0) return false;
+  console.log();
+  const instSpinner = maybeSpinner(`Fetching ${result.name || recordId} from ${domain}...`, flags).start();
+  await installSkill({
+    domain,
+    recordId,
+    record: result as unknown as Record<string, unknown>,
+    manifest: null,
+    installAll: false,
+    isProject: !!flags['project'],
+    flags: { ...flags, _selectedTools: tools, _quiet: true },
+    jsonOut,
+  });
+  instSpinner.success({ text: `Installed ${pc.bold(result.name || recordId)} successfully` });
+  return true;
+};
+
+const installMcpFromResult: InstallAction = async ({ result, domain, recordId, flags, jsonOut }) => {
+  const tools = await promptToolSelect(flags);
+  if (tools.length === 0) return false;
+  installMcp(domain, recordId, result as unknown as Record<string, unknown>, flags, jsonOut);
+
+  for (const tool of tools) {
+    const configPath = MCP_CONFIG_PATHS[tool];
+    if (!configPath) continue;
+    const shouldWrite = await confirmAction(`Add MCP config to ${tool} (${configPath})?`, flags);
+    if (!shouldWrite) continue;
+    try {
+      writeMcpConfig(configPath, domain, recordId, result);
+      console.log(`  ${pc.green('written')} ${configPath}`);
+      jsonOut.installed.push({ tool, configPath, type: 'mcp' });
+    } catch (err) {
+      console.log(`  ${pc.red('fail')} ${tool}: ${(err as Error).message}`);
+      jsonOut.errors.push({ tool, error: (err as Error).message });
+    }
+  }
+  return true;
+};
+
+const installAgentLike: InstallAction = async ({ result, domain, recordId, flags, jsonOut }) => {
+  if (AGENT_LIKE_TYPES.has(result.type)) {
+    installAgent(domain, recordId, result as unknown as Record<string, unknown>, flags, jsonOut);
+  }
+  return true;
+};
+
+/** Dispatch table keyed on `result.type`. Unknown types fall through to `installAgentLike`. */
+const INSTALL_ACTIONS: Record<string, InstallAction> = {
+  skill: installSkillFromResult,
+  mcp: installMcpFromResult,
+  agent: installAgentLike,
+  a2a: installAgentLike,
+  payment: installAgentLike,
+};
+
+// --- private: phase 2 — summary printers ---
+
+function printSummary(result: SearchResult, domain: string, recordId: string, jsonOut: JsonOut): void {
+  const installedCount = jsonOut.installed.length;
+
+  if (result.type === 'skill' && installedCount > 0) {
+    printSkillSummary(result, domain, recordId, jsonOut, installedCount);
+    return;
+  }
+  if (result.type === 'mcp' && installedCount > 0) {
+    printMcpSummary(result, domain, recordId, jsonOut);
+    return;
+  }
+  if (AGENT_LIKE_TYPES.has(result.type)) {
+    printAgentLikeSummary(result, domain, recordId);
+  }
+}
+
+function printSkillSummary(result: SearchResult, domain: string, recordId: string, jsonOut: JsonOut, installedCount: number): void {
+  console.log();
+  const canonPath = `~/.agents/skills/${domain}/${recordId}`;
+  console.log(`  Installing...`);
+  console.log(`    ${pc.green('->')} ${canonPath}/SKILL.md ${pc.dim('(canonical)')}`);
+  for (const inst of jsonOut.installed) {
+    const shortPath = (inst['path'] as string).replace(os.homedir(), '~');
+    console.log(`    ${pc.green('->')} ${shortPath} ${pc.dim('->')} ${pc.dim((inst['link_type'] as string) || 'symlink')}`);
+  }
+  console.log();
+  console.log(`  ${pc.green('+')} Installed ${pc.bold('"' + (result.name || recordId) + '"')} to ${installedCount} tool${installedCount > 1 ? 's' : ''}`);
+  console.log(`     Source: ${domain} | Verified: ${result.verified ? pc.green('+') : pc.yellow('-')} | Type: ${RECORD_TYPES[result.type] ?? result.type}`);
+  console.log();
+  console.log(`  ${pc.dim('The skill is now available to your AI tools.')}`);
+  console.log(`  ${pc.dim('To update:')} npx agent-root update ${domain}/${recordId}`);
+  console.log(`  ${pc.dim('To remove:')} npx agent-root uninstall ${domain}/${recordId}`);
+  console.log();
+}
+
+function printMcpSummary(result: SearchResult, domain: string, recordId: string, jsonOut: JsonOut): void {
+  console.log();
+  console.log(`  ${pc.green('+')} Configured ${pc.bold('"' + (result.name || recordId) + '"')} MCP server`);
+  console.log(`     Source: ${domain} | Type: MCP`);
+  for (const inst of jsonOut.installed) {
+    console.log(`    ${pc.green('->')} ${inst['configPath'] as string}`);
+  }
+  console.log();
+}
+
+function printAgentLikeSummary(result: SearchResult, domain: string, recordId: string): void {
+  console.log();
+  console.log(`  ${pc.cyan('i')} ${pc.bold(result.name || recordId)} (${result.type})`);
+  console.log(`     Endpoint: ${result.endpoint || 'not specified'}`);
+  console.log(`     Source: ${domain}`);
+  if (result.type === 'payment') {
+    const raw = result as unknown as Record<string, unknown>;
+    if (raw['api_spec']) console.log(`     API Spec: ${raw['api_spec']}`);
+    if (Array.isArray(raw['protocols'])) console.log(`     Protocols: ${(raw['protocols'] as string[]).join(', ')}`);
+    if (Array.isArray(raw['methods'])) console.log(`     Methods: ${(raw['methods'] as string[]).join(', ')}`);
+    if (Array.isArray(raw['assets'])) console.log(`     Assets: ${(raw['assets'] as string[]).join(', ')}`);
+  }
+  console.log();
+}
+
+// --- private: MCP config writing ---
+
+/**
+ * Build the per-tool MCP client config entry. Two shapes:
+ *   - transport=http → `{ url }`
+ *   - everything else → `{ command, args }` (npx fallback if no install block)
+ *
+ * Extracted from `installMcpFromResult` to eliminate a nested ternary inside
+ * an object-spread (the original `r['transport'] === 'http' ? { url } : { command, args }`).
+ */
+function buildMcpClientEntry(result: SearchResult, recordId: string): Record<string, unknown> {
+  const r = result as unknown as Record<string, unknown>;
+  if (r['transport'] === 'http') {
+    return { url: r['endpoint'] };
+  }
+  const inst = r['install'] as Record<string, unknown> | undefined;
+  return {
+    command: inst?.['command'] || 'npx',
+    args: inst?.['args'] || [inst?.['package'] || recordId],
+  };
+}
+
+function writeMcpConfig(configPath: string, domain: string, recordId: string, result: SearchResult): void {
+  let existing: Record<string, unknown> = {};
+  try {
+    existing = JSON.parse(fs.readFileSync(configPath, 'utf8')) as Record<string, unknown>;
+  } catch {
+    // File may not exist, may be unreadable, or may contain malformed JSON.
+    // Any of those collapse to "start with an empty object" — we own the
+    // file going forward, so a partial overwrite is preferable to failing.
+  }
+  if (!existing['mcpServers']) existing['mcpServers'] = {};
+  const configKey = `${domain}/${recordId}`;
+  (existing['mcpServers'] as Record<string, unknown>)[configKey] = buildMcpClientEntry(result, recordId);
+  fs.mkdirSync(path.dirname(configPath), { recursive: true });
+  fs.writeFileSync(configPath, JSON.stringify(existing, null, 2) + '\n');
+}
+
+// --- private: tool detection prompt ---
 
 async function promptToolSelect(flags: Record<string, unknown>): Promise<string[]> {
   const detected = detectTools();
@@ -82,105 +279,4 @@ async function promptToolSelect(flags: Record<string, unknown>): Promise<string[
   }
 
   return selected;
-}
-
-export async function promptInstallFromResult(result: SearchResult, flags: Record<string, unknown>): Promise<void> {
-  const domain = result.domain;
-  const recordId = (result.id || result.record_id) as string;
-  const jsonOut: JsonOut = { status: 'success', domain, recordId, type: result.type, installed: [], skipped: [], errors: [] };
-
-  if (result.type === 'skill') {
-    const tools = await promptToolSelect(flags);
-    if (tools.length === 0) return;
-    console.log();
-    const instSpinner = maybeSpinner(`Fetching ${result.name || recordId} from ${domain}...`, flags).start();
-    await installSkill({
-      domain,
-      recordId,
-      record: result as unknown as Record<string, unknown>,
-      manifest: null,
-      installAll: false,
-      isProject: !!flags['project'],
-      flags: { ...flags, _selectedTools: tools, _quiet: true },
-      jsonOut,
-    });
-    instSpinner.success({ text: `Installed ${pc.bold(result.name || recordId)} successfully` });
-  } else if (result.type === 'mcp') {
-    const tools = await promptToolSelect(flags);
-    if (tools.length === 0) return;
-    installMcp(domain, recordId, result as unknown as Record<string, unknown>, flags, jsonOut);
-
-    for (const tool of tools) {
-      const configPath = MCP_CONFIG_PATHS[tool];
-      if (!configPath) continue;
-      const shouldWrite = await confirmAction(`Add MCP config to ${tool} (${configPath})?`, flags);
-      if (shouldWrite) {
-        try {
-          let existing: Record<string, unknown> = {};
-          try { existing = JSON.parse(fs.readFileSync(configPath, 'utf8')) as Record<string, unknown>; } catch {}
-          if (!existing['mcpServers']) existing['mcpServers'] = {};
-          const configKey = `${domain}/${recordId}`;
-          const r = result as unknown as Record<string, unknown>;
-          const inst = r['install'] as Record<string, unknown> | undefined;
-          (existing['mcpServers'] as Record<string, unknown>)[configKey] = r['transport'] === 'http'
-            ? { url: r['endpoint'] }
-            : { command: inst?.['command'] || 'npx', args: inst?.['args'] || [inst?.['package'] || recordId] };
-          fs.mkdirSync(path.dirname(configPath), { recursive: true });
-          fs.writeFileSync(configPath, JSON.stringify(existing, null, 2) + '\n');
-          console.log(`  ${pc.green('written')} ${configPath}`);
-          jsonOut.installed.push({ tool, configPath, type: 'mcp' });
-        } catch (err) {
-          console.log(`  ${pc.red('fail')} ${tool}: ${(err as Error).message}`);
-          jsonOut.errors.push({ tool, error: (err as Error).message });
-        }
-      }
-    }
-  } else if (result.type === 'agent' || result.type === 'a2a' || result.type === 'payment') {
-    installAgent(domain, recordId, result as unknown as Record<string, unknown>, flags, jsonOut);
-  }
-
-  const installedCount = jsonOut.installed.length;
-  if (result.type === 'skill' && installedCount > 0) {
-    console.log();
-    const canonPath = `~/.agents/skills/${domain}/${recordId}`;
-    console.log(`  Installing...`);
-    console.log(`    ${pc.green('->')} ${canonPath}/SKILL.md ${pc.dim('(canonical)')}`);
-    for (const inst of jsonOut.installed) {
-      const shortPath = (inst['path'] as string).replace(os.homedir(), '~');
-      console.log(`    ${pc.green('->')} ${shortPath} ${pc.dim('->')} ${pc.dim((inst['link_type'] as string) || 'symlink')}`);
-    }
-    console.log();
-    console.log(`  ${pc.green('+')} Installed ${pc.bold('"' + (result.name || recordId) + '"')} to ${installedCount} tool${installedCount > 1 ? 's' : ''}`);
-    console.log(`     Source: ${domain} | Verified: ${result.verified ? pc.green('+') : pc.yellow('-')} | Type: ${RECORD_TYPES[result.type] ?? result.type}`);
-    console.log();
-    console.log(`  ${pc.dim('The skill is now available to your AI tools.')}`);
-    console.log(`  ${pc.dim('To update:')} npx agent-root update ${domain}/${recordId}`);
-    console.log(`  ${pc.dim('To remove:')} npx agent-root uninstall ${domain}/${recordId}`);
-    console.log();
-  } else if (result.type === 'mcp' && installedCount > 0) {
-    console.log();
-    console.log(`  ${pc.green('+')} Configured ${pc.bold('"' + (result.name || recordId) + '"')} MCP server`);
-    console.log(`     Source: ${domain} | Type: MCP`);
-    for (const inst of jsonOut.installed) {
-      console.log(`    ${pc.green('->')} ${inst['configPath'] as string}`);
-    }
-    console.log();
-  } else if (result.type === 'agent' || result.type === 'a2a' || result.type === 'payment') {
-    console.log();
-    console.log(`  ${pc.cyan('i')} ${pc.bold(result.name || recordId)} (${result.type})`);
-    console.log(`     Endpoint: ${result.endpoint || 'not specified'}`);
-    console.log(`     Source: ${domain}`);
-    if (result.type === 'payment') {
-      const raw = result as unknown as Record<string, unknown>;
-      if (raw['api_spec']) console.log(`     API Spec: ${raw['api_spec']}`);
-      if (Array.isArray(raw['protocols'])) console.log(`     Protocols: ${(raw['protocols'] as string[]).join(', ')}`);
-      if (Array.isArray(raw['methods'])) console.log(`     Methods: ${(raw['methods'] as string[]).join(', ')}`);
-      if (Array.isArray(raw['assets'])) console.log(`     Assets: ${(raw['assets'] as string[]).join(', ')}`);
-    }
-    console.log();
-  }
-
-  if (flags['json']) {
-    console.log(JSON.stringify(jsonOut, null, 2));
-  }
 }
