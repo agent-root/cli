@@ -10,17 +10,23 @@ export interface SpinnerLike {
   info(opts?: { text?: string }): SpinnerLike;
 }
 
-const _noop: SpinnerLike = {
-  start() { return _noop; },
-  stop() { return _noop; },
-  success() { return _noop; },
-  error() { return _noop; },
-  update() { return _noop; },
-  warn() { return _noop; },
-  info() { return _noop; },
+/**
+ * Drop-in `SpinnerLike` that swallows every call. Used in `--json` mode so
+ * we can write `maybeSpinner(...).start().success(...)` chains unconditionally
+ * without polluting machine-readable output. Per Google TS Style "Naming style"
+ * the underscore prefix is avoided.
+ */
+const noopSpinner: SpinnerLike = {
+  start() { return noopSpinner; },
+  stop() { return noopSpinner; },
+  success() { return noopSpinner; },
+  error() { return noopSpinner; },
+  update() { return noopSpinner; },
+  warn() { return noopSpinner; },
+  info() { return noopSpinner; },
 };
 
 export function maybeSpinner(text: string, flags: Record<string, unknown>): SpinnerLike {
-  if (flags && flags.json) return _noop;
+  if (flags && flags.json) return noopSpinner;
   return createSpinner(text) as unknown as SpinnerLike;
 }
