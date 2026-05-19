@@ -92,10 +92,19 @@ async function buildSubmitBody(domain: string, manifestUrlFlag: string | undefin
     body['manifest_url'] = manifestUrlFlag;
     return { body, resolvedManifestUrl: manifestUrlFlag };
   }
-  const probe = await resolveAgentroot(domain);
-  if (probe.found && probe.mode === 'manifest') {
-    body['manifest_url'] = probe.manifestUrl;
-    return { body, resolvedManifestUrl: probe.manifestUrl };
+  // The local DNS probe is a convenience, not a precondition. A transient
+  // ETIMEOUT or refused resolver must not block the submit, the registry
+  // does its own verification anyway, so swallow any unexpected error and
+  // fall through to "no manifest_url, let the server figure it out".
+  try {
+    const probe = await resolveAgentroot(domain);
+    if (probe.found && probe.mode === 'manifest') {
+      body['manifest_url'] = probe.manifestUrl;
+      return { body, resolvedManifestUrl: probe.manifestUrl };
+    }
+  } catch {
+    // DNS hiccup on the user's machine, the registry will retry server-side
+    // and either index the domain or return the TXT-record instructions.
   }
   return { body, resolvedManifestUrl: null };
 }
@@ -137,9 +146,15 @@ export async function cmdSubmit(positional: string[], flags: Record<string, unkn
   // Success path, the registry verified DNS and indexed the manifest.
   if (data.success) {
     spinner.success({ text: data.message ?? `Submitted ${domain}` });
-    if (resolvedManifestUrl) {
+    // Prefer the URL the registry actually verified, fall back to the one
+    // we probed locally so the output is informative even if the registry
+    // omitted it from its response.
+    const manifestUrl = (data.manifest && typeof data.manifest['manifest_url'] === 'string')
+      ? data.manifest['manifest_url'] as string
+      : resolvedManifestUrl;
+    if (manifestUrl) {
       console.log();
-      console.log(`  ${pc.dim('manifest:')} ${resolvedManifestUrl}`);
+      console.log(`  ${pc.dim('manifest:')} ${manifestUrl}`);
     }
     if (typeof data.records_indexed === 'number') {
       console.log(`  ${pc.dim('indexed:')}  ${data.records_indexed} record(s)`);
