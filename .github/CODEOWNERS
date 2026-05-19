@@ -1,6 +1,26 @@
-# CODEOWNERS — initial roster.
+# CODEOWNERS
 #
-# Three catch-all reviewers. Any one is enough to approve a PR
-# (branch protection enforces "1 approval, code-owner review required").
+# Order matters: later rules override earlier ones for the same path.
+# Per branch protection, any one code owner's approval is enough on a PR.
+# The catch-all at the top covers everyday CLI work; the more specific
+# rules below require review from all listed owners on supply-chain or
+# governance-sensitive changes.
 
-*                                                 @mayank-d3 @AlexSugak @isingh
+# Catch-all: any one of the three active maintainers can approve.
+*                                       @mayank-d3 @AlexSugak @isingh
+
+# Governance + community files: full team review preferred.
+GOVERNANCE.md                           @mayank-d3 @AlexSugak @isingh
+MAINTAINERS.md                          @mayank-d3 @AlexSugak @isingh
+CODE_OF_CONDUCT.md                      @mayank-d3 @AlexSugak @isingh
+SECURITY.md                             @mayank-d3 @AlexSugak @isingh
+LICENSE                                 @mayank-d3 @AlexSugak @isingh
+
+# Supply-chain-sensitive: dep changes are reviewed by all maintainers.
+package.json                            @mayank-d3 @AlexSugak @isingh
+pnpm-lock.yaml                          @mayank-d3 @AlexSugak @isingh
+
+# CI / release workflows: any change is a multi-maintainer review.
+/.github/workflows/                     @mayank-d3 @AlexSugak @isingh
+/.github/CODEOWNERS                     @mayank-d3 @AlexSugak @isingh
+/.github/dependabot.yml                 @mayank-d3 @AlexSugak @isingh

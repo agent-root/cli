@@ -1,6 +1,6 @@
 # Getting Support
 
-Different channels for different kinds of help.
+Different channels for different kinds of help. Maintainers aim to acknowledge issues within ~7 days; Discussions are best-effort with no SLA.
 
 ## I think I found a bug
 

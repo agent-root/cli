@@ -8,10 +8,18 @@ By participating, you agree to abide by the [Contributor Covenant](CODE_OF_CONDU
 
 ## Where to start
 
-- **Bug reports / feature requests**: open an [issue](https://github.com/d3-inc/agentroot/issues/new/choose).
-- **Documentation**: PRs to README welcome anytime.
-- **CLI features**: new commands, new flags, new tool integrations. File an issue first to align on scope, then PR.
+- **Bug reports / feature requests**: open an [issue](https://github.com/d3-inc/agentroot/issues/new/choose). Search existing issues first.
+- **Documentation**: PRs to README welcome anytime; no prior issue required.
+- **Looking for something to work on**: filter open issues by the `good first issue` or `help wanted` labels.
 - **Protocol-level changes** (new record types, manifest schema): those go to the main [agentroot repo](https://github.com/d3-inc/agentroot), not this one. The CLI consumes the protocol; it doesn't define it.
+
+## File an issue before a non-trivial PR
+
+For anything beyond a small fix or documentation tweak, **open an issue or discussion first** so maintainers can confirm scope before you write code. This protects your time. A PR that gets closed because the change isn't wanted is a worse outcome for both sides than a short conversation up front.
+
+Trivial PRs (typo fixes, small doc clarifications, single-line bug fixes with obvious correctness) do not need a prior issue.
+
+Non-trivial PRs that bypass this step may be asked to be split, narrowed, or rewritten before review begins.
 
 ## Development setup
 
@@ -187,11 +195,37 @@ git commit -s -m "feat: your message"
 
 This appends a `Signed-off-by: Your Name <your.email@example.com>` line.
 
-## No AI co-authorship
+## AI-assisted contributions
 
-You are the author of your commits. Please do not add `Co-Authored-By:` trailers crediting Claude, Copilot, Cursor, ChatGPT, or any other AI assistant. The same applies to "Generated with..." footers in commit messages or PR descriptions. If you used AI tooling to draft a change, that is your choice as the author; the tool is not a co-author.
+We are pragmatic about AI tools. You are welcome to use them, and we have two rules.
 
-The `Signed-off-by:` line from `git commit -s` should be the only trailer on the commit.
+**No AI co-authorship.** Please do not add `Co-Authored-By:` trailers crediting Claude, Copilot, Cursor, ChatGPT, or any other AI assistant. The same applies to "Generated with..." footers in commit messages or PR descriptions. If you used AI tooling to draft a change, that is your choice as the author; the tool is not a co-author. The `Signed-off-by:` line from `git commit -s` should be the only trailer on the commit.
+
+**Soft disclosure expectation.** If a meaningful portion of the change was AI-assisted (drafted with an LLM, refactored by an agent, etc.), please mention it briefly in the PR description, e.g. _"Drafted with help from Claude; I reviewed every line before submitting."_ This is not a gate, just context for reviewers. We do not reject PRs for being AI-assisted; we may ask follow-up questions if the diff suggests the contributor did not read the code.
+
+**You are still the author.** By signing off with DCO, you are certifying that the code is yours to submit under the project's license. That responsibility does not transfer to a model.
+
+## Triage
+
+When you open an issue or PR, expect this:
+
+- The `triage` label is applied automatically by the issue template.
+- A maintainer will leave at least an acknowledgement comment within **~7 days** in most cases. We do not promise a fix in that window, only that you will not hear silence.
+- The maintainer replaces `triage` with one of these labels as the request settles:
+
+  | Label              | Meaning                                                              |
+  |--------------------|----------------------------------------------------------------------|
+  | `bug`              | Confirmed bug. Reproducible, affects current behavior.               |
+  | `enhancement`      | Confirmed feature request worth doing.                               |
+  | `good first issue` | Scoped, well-defined, friendly for new contributors.                 |
+  | `help wanted`      | Scoped, but the team does not have bandwidth; outside PRs welcome.   |
+  | `needs-repro`      | We cannot reproduce yet; please add steps or sample output.          |
+  | `needs-info`       | Awaiting clarification from the reporter.                            |
+  | `discussion`       | Out of scope for an immediate change; conversation needed.           |
+  | `wontfix`          | Intentional behavior or out of scope; closed with explanation.       |
+  | `duplicate`        | Already tracked in another issue (linked in comments).               |
+
+If your issue still has the `triage` label after a week, feel free to comment and ping a maintainer. We are not infallible.
 
 ## PR checklist
 
@@ -249,9 +283,20 @@ Look at `tests/lib/format.test.ts` and `tests/commands/install-helpers.test.ts` 
 
 ## Releasing
 
-There is **no automated release pipeline** at the moment. The repo intentionally ships no publish workflow until the release strategy (registry, signing, provenance, cadence) is decided. Maintainers cut releases manually when ready.
+There is **no automated release pipeline** at the moment. The repo intentionally ships no publish workflow until the release strategy (registry, signing, provenance, cadence) is decided. Maintainers cut releases manually when the package is ready to ship.
 
-When the release process is settled, this section will document it.
+The interim manual flow when we do publish:
+
+1. Land all intended PRs in `main` via the normal review process.
+2. Promote `## [Unreleased]` in `CHANGELOG.md` to a new version + date.
+3. Bump `version` in `package.json`. Pick semver per the Changed/Removed entries.
+4. Open a release PR (`chore(release): v0.X.Y`) so the version bump itself goes through review.
+5. After merge, tag the release commit locally (`git tag v0.X.Y -m "v0.X.Y"`) and push the tag.
+6. From the tagged commit, run `pnpm publish --access public` (provenance and 2FA are added once we decide on the publish identity).
+
+Release authority is documented in [GOVERNANCE.md#release-authority](GOVERNANCE.md#release-authority): any maintainer can cut a patch / minor release; major releases require lazy consensus.
+
+When the publish pipeline is automated, this section moves to a dedicated `RELEASING.md`.
 
 ## Getting help
 

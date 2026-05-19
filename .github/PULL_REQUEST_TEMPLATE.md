@@ -20,6 +20,18 @@
 
 <!-- Manual verification steps a reviewer can follow. -->
 
-## Related
+## Closes / Related
 
-<!-- Link to issue, related PR, or external context. -->
+<!--
+  If this PR fixes an open issue, include "Closes #123" on its own line so
+  GitHub auto-closes the issue on merge. For related-but-not-fixing PRs or
+  external context, link them here too.
+-->
+
+<!--
+  Optional: did you use AI tooling to draft this change? A short note in the
+  Summary section (e.g. "Drafted with help from Claude; reviewed every line")
+  helps the reviewer. Per CONTRIBUTING.md, no Co-Authored-By trailers for
+  AI assistants; you are the sole author.
+-->
+
