@@ -8,12 +8,17 @@ import { cmdUninstall } from './commands/uninstall';
 import { cmdInit } from './commands/init';
 import { cmdValidate } from './commands/validate';
 import { cmdConfig } from './commands/config';
+import { cmdStats } from './commands/stats';
+import { cmdHealth } from './commands/health';
+import { cmdManifests } from './commands/manifests';
+import { cmdCollections } from './commands/collections';
+import { cmdSubmit } from './commands/submit';
 import { parseArgs } from './cli/parse-args';
 import { fatal } from './cli/fatal';
 
 export function showHelp(): void {
   console.log(`
-${pc.bold('agentroot')} — CLI for the AgentRoot protocol
+${pc.bold('agentroot')}: CLI for the AgentRoot protocol
 
 ${pc.bold('USAGE')}
   npx agent-root <command> [options]
@@ -31,33 +36,50 @@ ${pc.bold('INSTALL')}
 ${pc.bold('PUBLISH')}
   ${pc.cyan('init')}     [path]                   Scaffold a manifest
   ${pc.cyan('validate')} [path]                   Validate a manifest
+  ${pc.cyan('submit')}   <domain>                 Submit a domain to the public registry
+
+${pc.bold('REGISTRY')}
+  ${pc.cyan('stats')}                              Registry counts (agents, skills, by TLD)
+  ${pc.cyan('health')}                             Probe the registry API
+  ${pc.cyan('manifests')} [--query <q>]            List registered manifests
+  ${pc.cyan('collections')} [<slug>]               Browse curated collections
 
 ${pc.bold('OPTIONS')}
   --tool <name>    Target tool: claude, codex, gemini, cursor, agents
   --type <type>    Filter by record type: agent, mcp, skill, a2a, payment
   --project        Install to project directory (not global)
-  --all            Install all records from a domain
+  --all            Install all records (or fetch every search/manifests page)
+  --page <N>       Page number for search/manifests (1-indexed, default 1)
+  --limit <N>      Per-page limit (1..100, default 20)
   --json           Output as JSON
   --domain <name>  Domain name for init template
+  --query <q>      Free-text filter for manifests
+  --manifest-url   Explicit manifest URL for submit
   --yes            Auto-confirm all prompts (for CI/scripts)
   --force          Overwrite existing files
   --no-install     Skip auto-install when resolving skill= records
 
 ${pc.bold('EXAMPLES')}
   ${pc.dim('# Resolve a domain\'s capabilities directly via DNS')}
-  npx agent-root resolve stripe.com
-  npx agent-root resolve stripe.com/payments
+  npx agent-root resolve doma.xyz
+  npx agent-root resolve doma.xyz/doma-protocol
 
-  ${pc.dim('# Search the registry')}
-  npx agent-root search "database" --type mcp
-  npx agent-root search "deploy"
+  ${pc.dim('# Search the public registry')}
+  npx agent-root search doma
+  npx agent-root search "register domain" --type skill
 
   ${pc.dim('# Install a record')}
-  npx agent-root install stripe.com/payments --tool claude
+  npx agent-root install doma.xyz/doma-protocol --tool claude
 
   ${pc.dim('# Publish your own manifest')}
   npx agent-root init --domain mycompany.com
   npx agent-root validate .well-known/agentroot.json
+  npx agent-root submit mycompany.com
+
+  ${pc.dim('# Browse the registry')}
+  npx agent-root stats
+  npx agent-root manifests --query doma
+  npx agent-root collections featured-domains
 
 ${pc.bold('PROTOCOL')}
   AgentRoot resolves AI capabilities via DNS TXT records + JSON manifests.
@@ -116,6 +138,21 @@ export async function main(): Promise<void> {
         break;
       case 'config':
         await cmdConfig(positional, flags);
+        break;
+      case 'stats':
+        await cmdStats(positional, flags);
+        break;
+      case 'health':
+        await cmdHealth(positional, flags);
+        break;
+      case 'manifests':
+        await cmdManifests(positional, flags);
+        break;
+      case 'collections':
+        await cmdCollections(positional, flags);
+        break;
+      case 'submit':
+        await cmdSubmit(positional, flags);
         break;
       default:
         fatal(`Unknown command: ${cmd}. Run "agentroot help" for usage.`);
