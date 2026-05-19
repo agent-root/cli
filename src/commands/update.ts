@@ -9,6 +9,25 @@ import { fetch } from '../services/http/fetch';
 import { fatal } from '../cli/fatal';
 import { maybeSpinner } from '../cli/spinner';
 
+// --- types ---
+
+/**
+ * Result of fetching a single installed record's `source_url`. Promoted from
+ * a local-to-function type so the handler helpers below can reference it.
+ */
+type FetchOutcome =
+  | { kind: 'skip'; key: string }
+  | { kind: 'fail'; key: string; message: string }
+  | { kind: 'fetched'; key: string; entry: InstalledEntry; content: string };
+
+interface UpdateTally {
+  updated: number;
+  upToDate: number;
+  failed: number;
+}
+
+// --- public entry point ---
+
 export async function cmdUpdate(positional: string[], flags: Record<string, unknown>): Promise<void> {
   const state = readInstalledState();
   const allKeys = Object.keys(state.installed);
@@ -25,10 +44,6 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
     // Fetch every installed record's source in parallel — for N installed
     // skills this turns N sequential round-trips into one round-trip total.
     // We still print per-record results in deterministic key order below.
-    type FetchOutcome =
-      | { kind: 'skip'; key: string }
-      | { kind: 'fail'; key: string; message: string }
-      | { kind: 'fetched'; key: string; entry: InstalledEntry; content: string };
     const outcomes = await Promise.all(allKeys.map(async (key): Promise<FetchOutcome> => {
       const entry = state.installed[key];
       if (!entry) return { kind: 'skip', key };
@@ -42,47 +57,16 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
       }
     }));
 
-    let updated = 0, upToDate = 0, failed = 0;
+    const tally = { updated: 0, upToDate: 0, failed: 0 };
     for (const outcome of outcomes) {
-      if (outcome.kind === 'skip') {
-        const entry = state.installed[outcome.key];
-        if (entry && !entry.source_url) {
-          console.log(`  ${pc.yellow('skip')} ${outcome.key} — no source_url`);
-        }
-        continue;
-      }
-      if (outcome.kind === 'fail') {
-        console.log(`  ${pc.red('fail')} ${outcome.key} — ${outcome.message}`);
-        failed++;
-        continue;
-      }
-      const { key, entry, content } = outcome;
-      const newHash = hashContent(content);
-      if (newHash === entry.version_hash) {
-        console.log(`  ${pc.green('✓')} ${key} — up to date`);
-        upToDate++;
-      } else {
-        propagateContent(entry, content);
-        upsertInstalled({
-          domain: entry.domain,
-          record_id: entry.record_id,
-          type: entry.type,
-          name: entry.name,
-          description: entry.description,
-          source_url: entry.source_url,
-          version_hash: newHash,
-          tools: entry.tools,
-        });
-        console.log(`  ${pc.green('↑')} ${key} — ${pc.bold('updated')} (${newHash.slice(0, 8)})`);
-        updated++;
-      }
+      handleOutcome(outcome, state.installed, tally);
     }
 
     console.log();
     const parts: string[] = [];
-    if (upToDate > 0) parts.push(`${upToDate} up to date`);
-    if (updated > 0) parts.push(`${updated} updated`);
-    if (failed > 0) parts.push(`${failed} failed`);
+    if (tally.upToDate > 0) parts.push(`${tally.upToDate} up to date`);
+    if (tally.updated > 0) parts.push(`${tally.updated} updated`);
+    if (tally.failed > 0) parts.push(`${tally.failed} failed`);
     console.log(`  ${parts.join(', ')}`);
     return;
   }
@@ -155,6 +139,56 @@ export async function cmdUpdate(positional: string[], flags: Record<string, unkn
   if (flags['json']) {
     console.log(JSON.stringify({ status: 'success', domain, record_id: recordId, version_hash: newHash, propagated_via: 'symlink' }));
   }
+}
+
+// --- private helpers ---
+
+/**
+ * Dispatch a single fetch outcome to the right side-effect: print + count.
+ * Mutates `tally` in place to keep the call site readable as a one-liner.
+ *
+ * Behavior matches the original three-branch if-chain — pulled out so the
+ * orchestration loop in `cmdUpdate` doesn't have to interleave high-level
+ * "compute hash, write, log" prose with low-level branching.
+ */
+function handleOutcome(
+  outcome: FetchOutcome,
+  installed: Record<string, InstalledEntry>,
+  tally: UpdateTally,
+): void {
+  if (outcome.kind === 'skip') {
+    const entry = installed[outcome.key];
+    if (entry && !entry.source_url) {
+      console.log(`  ${pc.yellow('skip')} ${outcome.key} — no source_url`);
+    }
+    return;
+  }
+  if (outcome.kind === 'fail') {
+    console.log(`  ${pc.red('fail')} ${outcome.key} — ${outcome.message}`);
+    tally.failed++;
+    return;
+  }
+  // outcome.kind === 'fetched'
+  const { key, entry, content } = outcome;
+  const newHash = hashContent(content);
+  if (newHash === entry.version_hash) {
+    console.log(`  ${pc.green('✓')} ${key} — up to date`);
+    tally.upToDate++;
+    return;
+  }
+  propagateContent(entry, content);
+  upsertInstalled({
+    domain: entry.domain,
+    record_id: entry.record_id,
+    type: entry.type,
+    name: entry.name,
+    description: entry.description,
+    source_url: entry.source_url,
+    version_hash: newHash,
+    tools: entry.tools,
+  });
+  console.log(`  ${pc.green('↑')} ${key} — ${pc.bold('updated')} (${newHash.slice(0, 8)})`);
+  tally.updated++;
 }
 
 /**
