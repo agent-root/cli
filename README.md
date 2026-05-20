@@ -1,8 +1,18 @@
 # agent-root
 
-[![npm](https://img.shields.io/npm/v/%40agent-root%2Fcli.svg)](https://www.npmjs.com/package/@agent-root/cli)
-[![license](https://img.shields.io/npm/l/%40agent-root%2Fcli.svg)](LICENSE)
-[![Node](https://img.shields.io/node/v/%40agent-root%2Fcli.svg)](https://nodejs.org/)
+<!--
+  Badges are static while @agent-root/cli is pre-publish. When the package
+  ships to npm and the repo is public, swap these back to live shields URLs:
+    https://img.shields.io/npm/v/%40agent-root%2Fcli.svg
+    https://img.shields.io/npm/l/%40agent-root%2Fcli.svg
+    https://img.shields.io/node/v/%40agent-root%2Fcli.svg
+  The CI badge URL is already public-correct; it'll start rendering once the
+  repo flips public.
+-->
+
+[![version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/agent-root/cli/releases)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org/)
 [![CI](https://github.com/agent-root/cli/actions/workflows/ci.yml/badge.svg)](https://github.com/agent-root/cli/actions/workflows/ci.yml)
 
 The command-line client for the **AgentRoot protocol**. Resolve domains, search the public registry, install skills, MCP servers, and agents into Claude, Cursor, Codex, Gemini, or any AgentRoot-aware tool.
