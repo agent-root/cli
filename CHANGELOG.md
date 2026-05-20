@@ -6,12 +6,22 @@ All notable changes to the `agent-root` CLI are documented in this file. Format 
 
 ## [0.3.0] 2026-05-20
 
-First standalone release. Same npm package name (`agent-root`) as the
-monorepo-published `0.2.0`; this version is the first cut from the
-independent `agent-root/cli` repo. The package is now wholly maintained
-under [agent-root/cli](https://github.com/agent-root/cli); the monorepo
-copy is preserved for historical reference but no longer the source of
-truth for new releases.
+First standalone release. Cut from the independent
+[agent-root/cli](https://github.com/agent-root/cli) repo. The monorepo
+copy in `d3-inc/agentroot/packages/cli` is preserved for historical
+reference but no longer the source of truth for new releases.
+
+### Changed
+
+- **Package renamed**: `agent-root` (unscoped, last published by the
+  monorepo at `0.2.0`) to **`@agent-root/cli`** (scoped, under the
+  agent-root npm org). Installed binary is still `agent-root` (and the
+  `agentroot` alias), so existing scripts that invoke the command don't
+  break — only the install command changes.
+  - Old: `npm install -g agent-root` and `npx agent-root <cmd>`
+  - New: `npm install -g @agent-root/cli` and `npx -p @agent-root/cli agent-root <cmd>`
+  - The legacy `agent-root@0.2.0` remains on npm; new releases publish
+    under `@agent-root/cli` only.
 
 ### Added
 

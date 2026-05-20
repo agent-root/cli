@@ -1,8 +1,8 @@
 # agent-root
 
-[![npm](https://img.shields.io/npm/v/agent-root.svg)](https://www.npmjs.com/package/agent-root)
-[![license](https://img.shields.io/npm/l/agent-root.svg)](LICENSE)
-[![Node](https://img.shields.io/node/v/agent-root.svg)](https://nodejs.org/)
+[![npm](https://img.shields.io/npm/v/%40agent-root%2Fcli.svg)](https://www.npmjs.com/package/@agent-root/cli)
+[![license](https://img.shields.io/npm/l/%40agent-root%2Fcli.svg)](LICENSE)
+[![Node](https://img.shields.io/node/v/%40agent-root%2Fcli.svg)](https://nodejs.org/)
 [![CI](https://github.com/agent-root/cli/actions/workflows/ci.yml/badge.svg)](https://github.com/agent-root/cli/actions/workflows/ci.yml)
 
 The command-line client for the **AgentRoot protocol**. Resolve domains, search the public registry, install skills, MCP servers, and agents into Claude, Cursor, Codex, Gemini, or any AgentRoot-aware tool.
@@ -70,15 +70,15 @@ The protocol specification and public registry live at [agentroot.io](https://ag
 
 ## Install
 
+The package is published as `@agent-root/cli` on npm. The installed binary is named `agent-root` (and `agentroot` as an alias) regardless of how you install it.
+
 ```bash
-# One-off, no install required
-npx agent-root <command>
-
-# Or install globally
-npm install -g agent-root
-
-# Verify
+# Install globally
+npm install -g @agent-root/cli
 agent-root help
+
+# Or run a one-off without installing
+npx -p @agent-root/cli agent-root help
 ```
 
 Requires Node.js 18 or later. Works on macOS, Linux, and Windows.
