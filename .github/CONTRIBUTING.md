@@ -17,7 +17,7 @@ By participating, you agree to abide by the [Contributor Covenant](CODE_OF_CONDU
 
 For anything beyond a small fix or documentation tweak, **open an issue or discussion first** so maintainers can confirm scope before you write code. A PR closed because the change isn't wanted is a worse outcome than a short conversation up front.
 
-Trivial PRs (typo fixes, small doc clarifications, single-line bug fixes with obvious correctness) do not need a prior issue. Non-trivial PRs that skip this step may be asked to be split, narrowed, or rewritten before review begins.
+Trivial PRs (typo fixes, small doc clarifications, single-line bug fixes) do not need a prior issue. Non-trivial PRs that skip this step may be asked to be split, narrowed, or rewritten before review.
 
 ## Development setup
 
@@ -189,7 +189,7 @@ AI tools are welcome. Two rules:
 
 **No AI co-authorship.** Do not add `Co-Authored-By:` trailers crediting Claude, Copilot, Cursor, ChatGPT, or any other AI assistant, and no "Generated with..." footers in commit messages or PR descriptions. The `Signed-off-by:` line from `git commit -s` should be the only trailer on the commit.
 
-**Soft disclosure.** If a meaningful portion of the change was AI-assisted, mention it in the PR description, e.g. _"Drafted with help from Claude; I reviewed every line before submitting."_ Not a gate, just context for reviewers.
+**Soft disclosure.** If a meaningful portion of the change was AI-assisted, mention it in the PR description, e.g. _"Drafted with help from Claude; I reviewed every line before submitting."_
 
 By signing off with DCO, you certify the code is yours to submit under the project's license. That responsibility does not transfer to a model.
 

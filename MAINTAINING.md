@@ -85,7 +85,7 @@ gh api /repos/agent-root/agent-root-cli/branches/main/protection | jq .
 
 If the `Build / Type-check (Node 22)` context doesn't exist yet (CI hasn't run on `main` since the rule was set), GitHub records the rule but doesn't block until the first CI run completes. The next push triggers CI and the rule is enforced from then on.
 
-`enforce_admins: false` lets admins bypass in true emergencies. Treat any use of this as exceptional and document why.
+`enforce_admins: false` lets admins bypass in emergencies; document any use.
 
 ## Adding collaborators
 

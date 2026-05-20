@@ -5,7 +5,7 @@
 [![Node](https://img.shields.io/node/v/agent-root.svg)](https://nodejs.org/)
 [![CI](https://github.com/d3-inc/agentroot/actions/workflows/ci.yml/badge.svg)](https://github.com/d3-inc/agentroot/actions/workflows/ci.yml)
 
-The command-line client for the **AgentRoot protocol**. Resolve domains to discover AI capabilities, search the public registry, and install skills, MCP servers, and agents directly into Claude, Cursor, Codex, Gemini, or any AI tool that reads from your project directory.
+The command-line client for the **AgentRoot protocol**. Resolve domains, search the public registry, install skills, MCP servers, and agents into Claude, Cursor, Codex, Gemini, or any AgentRoot-aware tool.
 
 ![](docs/screenshots/resolve.png)
 
@@ -48,7 +48,7 @@ _agentroot.example.com  TXT  "v=ar1 manifest=https://example.com/.well-known/age
 
 That TXT record points to a JSON manifest listing the records the domain offers. No central authority, no API keys, no gatekeeping; anyone with a domain can publish, anyone with a DNS client can discover.
 
-`agent-root` is the reference CLI for the **consumer** side: find capabilities, install them into your AI tools, and (optionally) publish your own. The protocol specification and public registry live at [agentroot.io](https://agentroot.io).
+The protocol specification and public registry live at [agentroot.io](https://agentroot.io).
 
 ## What you can do with this CLI
 
@@ -85,7 +85,7 @@ Requires Node.js 18 or later. Works on macOS, Linux, and Windows.
 
 ## Help
 
-The full help screen, available at any time with `agent-root help`:
+Full help, available with `agent-root help`:
 
 ![](docs/screenshots/help.png)
 
@@ -141,7 +141,7 @@ Flag names accept kebab-case (`--manifest-url`) or camelCase (`--manifestUrl`); 
 
 All spinners, progress notes, and chatter go to **stderr**. Data and JSON output go to **stdout**. That means `agent-root <cmd> --json | jq .` works without `2>/dev/null`; pipes never carry color codes or progress lines.
 
-Run `agent-root <command> --help` for a per-command page covering just that command's flags, examples, and the exact [exit codes](#exit-codes) it can return. For example, `agent-root resolve --help` documents `--no-install`; `agent-root search --help` documents `--type` / `--page` / `--limit`.
+Run `agent-root <command> --help` for per-command flags, examples, and [exit codes](#exit-codes).
 
 If you typo a command, the CLI suggests the closest match:
 
@@ -153,7 +153,7 @@ error Unknown command: reslove
 
 ### Version & environment
 
-For bug reports, paste the output of `agent-root version`:
+For bug reports, paste `agent-root version`:
 
 ```text
 agent-root 0.2.0
@@ -163,13 +163,11 @@ api  https://www.agentroot.io
 config /Users/you/.agentroot/config.json
 ```
 
-`agent-root --version` (or `-v`) prints just the version on one line, matching the `node --version` / `npm --version` convention.
+`agent-root --version` (or `-v`) prints just the version on one line, matching `node --version` / `npm --version`.
 
 ## Usage
 
 ### Discover what a domain publishes
-
-The protocol's core operation. Pass a domain, get back its AI capabilities.
 
 ```bash
 agent-root resolve doma.xyz
@@ -201,11 +199,9 @@ Use `--json` for machine-readable output:
 agent-root resolve doma.xyz --json | jq '.records[].address'
 ```
 
-Use `--no-install` if you want to inspect a `skill=` shorthand record without auto-installing it.
-
 ### Search the registry
 
-Use this when you don't know which domain publishes what you need. Search hits the public registry, which indexes every domain submitted at [agentroot.io/submit](https://agentroot.io/submit).
+Search hits the public registry, which indexes domains submitted at [agentroot.io/submit](https://agentroot.io/submit).
 
 ```bash
 agent-root search doma
@@ -215,14 +211,14 @@ agent-root search marketplace --type agent
 
 ![](docs/screenshots/search.png)
 
-Type filters: `agent`, `mcp`, `skill`, `a2a`, `payment`. Results are paginated (20 per page by default). Use `--page` and `--limit` to walk longer result sets, or `--all` to fetch every page in one shot (capped at 1000 results):
+Results are paginated (20 per page). Use `--all` to fetch every page in one shot (capped at 1000 results):
 
 ```bash
 agent-root search doma --page 2 --limit 50
 agent-root search doma --all --type skill
 ```
 
-For machine-readable output, `--json` returns the full pagination envelope (`results`, `total`, `page`, `pages`, `limit`) so scripts can drive the loop:
+For scripting, `--json` returns the full envelope (`results`, `total`, `page`, `pages`, `limit`):
 
 ```bash
 agent-root search doma --json | jq -r '.results[] | select(.type=="skill") | .address'
@@ -231,7 +227,7 @@ agent-root search doma --json | jq '.total, .pages'
 
 ### Install a skill into your project
 
-Pick a record, point `--tool` at your AI assistant, and the CLI fetches the `SKILL.md` plus every supporting file it references and writes them to the directory your tool reads from.
+Point `--tool` at your AI assistant; the CLI fetches `SKILL.md` plus its supporting files into the directory your tool reads from.
 
 ```bash
 cd your-project
@@ -239,8 +235,6 @@ agent-root install doma.xyz/doma-protocol --tool agents --project
 ```
 
 ![](docs/screenshots/install.png)
-
-After install, open Claude (or Cursor, Codex, Gemini, etc.) and the skill is available.
 
 #### Supported AI tools
 
@@ -254,7 +248,7 @@ After install, open Claude (or Cursor, Codex, Gemini, etc.) and the skill is ava
 | `gemini` | `~/.gemini/skills/` | `.gemini/skills/` |
 | `agents` | `~/.agents/skills/` | `.agents/skills/` |
 
-Use `agents` (the default if you omit `--tool`) when you want a single install that any AgentRoot-aware tool will pick up. Use a tool-specific value when you only want one tool to see the skill.
+`agents` (the default) is a single install any AgentRoot-aware tool will pick up; tool-specific values scope to one tool.
 
 #### Project vs user install
 
@@ -264,8 +258,6 @@ Use `agents` (the default if you omit `--tool`) when you want a single install t
 | `--project` | The current directory's tool folder | Skills you want versioned with one specific project |
 
 #### Installing every record from a domain
-
-If a domain publishes several skills you all want:
 
 ```bash
 agent-root install doma.xyz --all --tool agents
@@ -284,7 +276,7 @@ agent-root install doma.xyz/doma-mpp --tool claude --project
 agent-root list
 ```
 
-Running `agent-root search` interactively (without `--json` and inside a TTY) also offers an "install this record?" prompt at the end.
+`agent-root search` interactively (without `--json` and inside a TTY) also offers an "install this record?" prompt at the end.
 
 ### Manage what you have installed
 
@@ -293,13 +285,13 @@ agent-root list
 agent-root list --json
 ```
 
-`list` reads `~/.agentroot/installed.json` and prints every record installed on this machine, with the tool-specific paths each one lives at:
+`list` reads `~/.agentroot/installed.json` and prints every installed record with its tool-specific paths:
 
 ![](docs/screenshots/list.png)
 
-For long lists, pipe to `less` or use `--json` to filter with `jq`.
+Pipe to `less` for long lists, or `--json | jq` to filter.
 
-To re-fetch a previously installed record (useful when the publisher has updated the SKILL.md):
+Re-fetch a record (when the publisher updated the SKILL.md):
 
 ```bash
 agent-root update doma.xyz/doma-protocol
@@ -313,11 +305,9 @@ agent-root uninstall doma.xyz/doma-protocol --yes
 
 ![](docs/screenshots/uninstall.png)
 
-`--yes` skips the confirmation prompt. Without it, you get an interactive confirmation.
+`--yes` skips the confirmation prompt.
 
 ### Publish your own manifest
-
-Three steps to publish AI capabilities on your domain.
 
 #### 1. Scaffold a manifest
 
@@ -325,7 +315,7 @@ Three steps to publish AI capabilities on your domain.
 agent-root init --domain mycompany.com
 ```
 
-This writes `.well-known/agentroot.json` with a starter record you can edit. The full schema is documented at [agentroot.io/docs/protocol](https://agentroot.io/docs/protocol).
+Writes `.well-known/agentroot.json` with a starter record. Schema: [agentroot.io/docs/protocol](https://agentroot.io/docs/protocol).
 
 ![](docs/screenshots/init.png)
 
@@ -337,15 +327,13 @@ agent-root validate .well-known/agentroot.json
 
 ![](docs/screenshots/validate.png)
 
-If validation fails, the error message identifies the offending record and field:
+If validation fails, the error identifies the offending record and field:
 
 ```text
 invalid agentroot.json
 
   - records[1]: mcp record missing "transport"
 ```
-
-Fix the indicated field and run `validate` again until it reports `valid`.
 
 #### 3. Add the DNS TXT record
 
@@ -355,17 +343,17 @@ On your DNS provider, create:
 _agentroot.mycompany.com  TXT  "v=ar1 manifest=https://mycompany.com/.well-known/agentroot.json"
 ```
 
-Serve the JSON file at the URL listed above. Anyone resolving `mycompany.com` with `agent-root resolve` (or any other AgentRoot client) will now discover your records.
+Serve the JSON at the URL above. Any AgentRoot client resolving `mycompany.com` will now discover your records.
 
 #### 4. Submit to the public registry
 
-Once DNS is live and serving the manifest, register the domain with [agentroot.io](https://agentroot.io) so it shows up in `agent-root search`:
+Once DNS is live, register the domain so it shows up in `agent-root search`:
 
 ```bash
 agent-root submit mycompany.com
 ```
 
-The CLI does a local DNS probe first, then posts to `/api/submit`. If the registry can verify the TXT record, it indexes the manifest and reports the records it found:
+The CLI does a local DNS probe, then posts to `/api/submit`. If the registry verifies the TXT record, it indexes the manifest and reports what it found:
 
 ```text
 ✔ Found and indexed: _agentroot, _skill records for mycompany.com
@@ -375,7 +363,7 @@ The CLI does a local DNS probe first, then posts to `/api/submit`. If the regist
   found:    _agentroot, _skill
 ```
 
-If DNS is not set up yet, `submit` prints the exact TXT record to add and exits non-zero so CI scripts fail loudly:
+If DNS isn't set up, `submit` prints the exact TXT record to add and exits non-zero:
 
 ```text
 ✖ No _agentroot TXT record found for mycompany.com
@@ -387,11 +375,9 @@ If DNS is not set up yet, `submit` prints the exact TXT record to add and exits 
     value: v=ar1 manifest=https://mycompany.com/.well-known/agentroot.json
 ```
 
-Pass `--manifest-url` to skip the DNS probe and submit a known URL directly. Use `--json` to consume the structured response (validation errors, instructions block, indexed records).
+`--manifest-url` skips the DNS probe and submits a known URL directly. `--json` returns the structured response (validation errors, instructions block, indexed records).
 
 ### Browse and health-check the registry
-
-Quick reads against the registry that mirror what the web UI shows.
 
 #### Health check
 
@@ -401,7 +387,7 @@ agent-root health
 
 ![](docs/screenshots/health.png)
 
-Exits non-zero if the registry is not reachable, so you can use it as a CI gate:
+Exits non-zero if the registry is unreachable, so it works as a CI gate:
 
 ```bash
 agent-root health && deploy
@@ -419,7 +405,7 @@ agent-root manifests --all --type mcp
 
 ![](docs/screenshots/manifests.png)
 
-Each row shows the domain, current verification status, the manifest URL, a breakdown of records by type, and the last verified date:
+Each row: domain, verification status, manifest URL, records by type, last verified date.
 
 ```text
   1. doma.xyz [active]
@@ -433,7 +419,7 @@ Each row shows the domain, current verification status, the manifest URL, a brea
 
 #### Curated collections
 
-The registry publishes editorial collections (e.g. `featured-domains`). List them or open one by slug:
+The registry publishes editorial collections (e.g. `featured-domains`):
 
 ```bash
 agent-root collections
@@ -457,18 +443,18 @@ Both forms accept `--json` for scripting.
 
 **When you run `agent-root install example.com/some-skill`:**
 
-1. Steps 1 to 3 above (or a fallback to the registry API if DNS resolution fails)
-2. For the named record, the CLI fetches `SKILL.md` and any supporting files referenced inside it (relative URLs are resolved against the SKILL.md location)
-3. Files are written to a canonical store at `~/.agents/skills/<domain>/<record-id>/`
-4. For each `--tool` you pass, a symlink (or a copy with `--project`) is created in that tool's expected location
+1. Steps 1 to 3 above (or a fallback to the registry API if DNS fails)
+2. For the named record, fetches `SKILL.md` and its supporting files (relative URLs resolved against the SKILL.md location)
+3. Files written to a canonical store at `~/.agents/skills/<domain>/<record-id>/`
+4. For each `--tool`, a symlink (or copy with `--project`) is created in that tool's expected location
 
-**When you run `agent-root search query`:** the CLI hits the registry's paginated `/api/records` endpoint with the query, optional type filter, page, and limit. If page 1 is empty it falls back to `/api/find-skills` (legacy, skill-only); if still nothing and the query is a bare keyword, it treats it as a domain by appending `.io` then `.com` and looks up the manifest directly.
+**When you run `agent-root search query`:** the CLI hits `/api/records` with the query, type filter, page, and limit. If page 1 is empty it falls back to `/api/find-skills` (legacy, skill-only); if still nothing and the query is a bare keyword, it treats it as a domain by appending `.io` then `.com`.
 
-The public registry at [agentroot.io](https://agentroot.io) is a convenience for `search`, `health`, `manifests`, `collections`, and `submit`, not a dependency for the core protocol. `resolve`, `install`, `update`, and `uninstall` work even if the registry is offline because they go through DNS.
+The public registry at [agentroot.io](https://agentroot.io) is a convenience for `search`, `health`, `manifests`, `collections`, and `submit`, not a dependency. `resolve`, `install`, `update`, and `uninstall` work even if the registry is offline because they go through DNS.
 
 ### Exit codes
 
-`agent-root` returns sysexits-style exit codes so shell scripts can branch on the failure mode. Source: [`man 3 sysexits`](https://man.freebsd.org/cgi/man.cgi?query=sysexits).
+Sysexits-style exit codes so scripts can branch on failure mode. Source: [`man 3 sysexits`](https://man.freebsd.org/cgi/man.cgi?query=sysexits).
 
 | Code | Name | Meaning |
 |---|---|---|
@@ -482,7 +468,7 @@ The public registry at [agentroot.io](https://agentroot.io) is a convenience for
 | `77` | `NOPERM` | Permission denied writing to `~/.agentroot` or `~/.claude/skills` |
 | `78` | `CONFIG` | Configuration error (installed record missing source_url, corrupted state) |
 
-In `--json` mode, errors are emitted as a single envelope on stdout (not stderr) with the same exit code, so scripts can branch on `jq '.error.code'` and `$?` together:
+Errors print one line to stderr (`error <msg>`) plus a one-line hint indented underneath. In `--json` mode the same data is emitted as a single envelope on stdout with the same exit code, so scripts can branch on `jq '.error.code'` and `$?` together (they always agree):
 
 ```bash
 $ agent-root resolve nonexistent.test --json
@@ -508,7 +494,7 @@ agent-root config get
 agent-root config set api-url https://www.agentroot.io
 ```
 
-Override the API base at runtime with the `AGENTROOT_API_BASE` environment variable:
+Or override the API base via `AGENTROOT_API_BASE`:
 
 ```bash
 AGENTROOT_API_BASE=https://my-mirror.example.com agent-root search billing
@@ -528,13 +514,13 @@ The CLI reads the following environment variables (precedence: explicit flag > n
 | `AGENTROOT_NO_COLOR=1` | Imply `--no-color` (namespaced variant) |
 | `AGENTROOT_API_BASE=<url>` | Override the registry API base |
 
-Explicit flags always win. For example, `CI=true agent-root install foo --no-yes` still prompts, because `--no-yes` was typed.
+Example: `CI=true agent-root install foo --no-yes` still prompts, because `--no-yes` was typed.
 
 No API key is required. The endpoints the CLI calls are public-read (`/api/records`, `/api/manifests`, `/api/manifests/{domain}`, `/api/find-skills`, `/api/health`, `/api/collections`, `/api/collections/{slug}`) plus one public-write (`/api/submit`, which the registry verifies via DNS before indexing).
 
 ### Shell completion
 
-`agent-root completion <shell>` prints a completion script to stdout. Redirect it to the location your shell loads on startup:
+`agent-root completion <shell>` prints a completion script to stdout. Redirect to where your shell loads on startup:
 
 ```bash
 # bash
@@ -553,23 +539,7 @@ agent-root completion fish > ~/.config/fish/completions/agent-root.fish
 agent-root completion pwsh > $PROFILE.CurrentUserAllHosts/agent-root.ps1
 ```
 
-Completes top-level commands, top-level flags, and value enums for `--tool` (claude, cursor, codex, gemini, agents), `--type` (agent, mcp, skill, a2a, payment), and the `completion` subcommand's shell argument.
-
-### Errors and JSON error shape
-
-Errors print one line to stderr (`error <msg>`) plus a one-line hint indented underneath. In `--json` mode the same data is emitted as a single envelope on stdout so the same pipeline can grab it without redirecting stderr:
-
-```json
-{
-  "error": {
-    "code": "NOHOST",
-    "message": "No _agentroot.example.test TXT record found",
-    "hint": "Try: agentroot search example"
-  }
-}
-```
-
-The `code` is one of the symbolic names in the [Exit codes](#exit-codes) table. Scripts can branch on either `$?` or `jq '.error.code'`; they always agree.
+Completes commands, flags, and `--tool` / `--type` value enums.
 
 ## Documentation
 
@@ -586,28 +556,19 @@ The `code` is one of the symbolic names in the [Exit codes](#exit-codes) table. 
 | Release notes | [CHANGELOG.md](CHANGELOG.md) |
 | AI-assistant project conventions | [CLAUDE.md](CLAUDE.md) |
 
-Repo layout:
-
-```text
-.            README + LICENSE + CHANGELOG + GOVERNANCE + MAINTAINERS + CLAUDE
-.github/     CONTRIBUTING + CODE_OF_CONDUCT + SECURITY + SUPPORT
-.github/     ISSUE_TEMPLATE/ + PULL_REQUEST_TEMPLATE.md + CODEOWNERS + workflows + dependabot.yml
-docs/        TESTING + screenshots/
-src/         source code (see CLAUDE.md for the cli/, commands/, services/ layout)
-tests/       vitest unit + integration tests
-```
+Source layout is in [CLAUDE.md](CLAUDE.md#project-layout).
 
 ## Contributing
 
-Contributions are welcome: bug reports, fixes, documentation improvements, new commands, new flags, new tool integrations.
+Bug reports, fixes, docs, new commands, flags, and tool integrations all welcome.
 
-- **Report a bug or request a feature**: use the [bug report](.github/ISSUE_TEMPLATE/bug_report.yml) or [feature request](.github/ISSUE_TEMPLATE/feature_request.yml) template. A maintainer leaves a first-response comment within ~7 days.
-- **Ask a question**: open a [Discussion](https://github.com/d3-inc/agentroot/discussions) (once enabled). Best-effort, no SLA.
-- **Send a code change**: fork, branch, push, open a PR against `main`. Full step-by-step (keeping your fork in sync, rebase before merge, PR checklist) in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md).
-- **Reading the code**: [CLAUDE.md](CLAUDE.md) covers structural conventions (file ordering, single-source-of-truth list, exit codes, streams).
-- **Find something to work on**: filter open issues by `good first issue` or `help wanted`.
+- **Bug or feature**: use the [bug report](.github/ISSUE_TEMPLATE/bug_report.yml) or [feature request](.github/ISSUE_TEMPLATE/feature_request.yml) template; first-response within ~7 days.
+- **Question**: open a [Discussion](https://github.com/d3-inc/agentroot/discussions) (once enabled). Best-effort, no SLA.
+- **Code change**: fork, branch, PR against `main`. Full flow in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md).
+- **Reading the code**: [CLAUDE.md](CLAUDE.md) covers file ordering, exit codes, streams, single source of truth.
+- **Find something to work on**: filter issues by `good first issue` or `help wanted`.
 
-See [GOVERNANCE.md](GOVERNANCE.md) for how decisions are made and how new maintainers are added.
+See [GOVERNANCE.md](GOVERNANCE.md) for decision-making and how maintainers are added.
 
 ## License
 
