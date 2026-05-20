@@ -4,7 +4,7 @@ Different channels for different kinds of help. Maintainers aim to acknowledge i
 
 ## I think I found a bug
 
-Open a [bug report](https://github.com/d3-inc/agentroot/issues/new?template=bug_report.yml). Please include:
+Open a [bug report](https://github.com/agent-root/cli/issues/new?template=bug_report.yml). Please include:
 
 - What you ran (`agent-root <command>`)
 - What you expected to happen
@@ -14,11 +14,11 @@ Open a [bug report](https://github.com/d3-inc/agentroot/issues/new?template=bug_
 
 ## I want a new feature or improvement
 
-Open a [feature request](https://github.com/d3-inc/agentroot/issues/new?template=feature_request.yml). Describe the use case before the implementation. What are you trying to do?
+Open a [feature request](https://github.com/agent-root/cli/issues/new?template=feature_request.yml). Describe the use case before the implementation. What are you trying to do?
 
 ## I have a question about how to use the CLI
 
-Open a [Discussion](https://github.com/d3-inc/agentroot/discussions) (once enabled). Discussions are searchable, so future visitors with the same question can find the answer.
+Open a [Discussion](https://github.com/agent-root/cli/discussions) (once enabled). Discussions are searchable, so future visitors with the same question can find the answer.
 
 ## I want to propose a protocol change
 

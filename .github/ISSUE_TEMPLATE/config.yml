@@ -1,10 +1,10 @@
 blank_issues_enabled: false
 contact_links:
   - name: GitHub Discussions — questions, ideas, design
-    url: https://github.com/d3-inc/agentroot/discussions
+    url: https://github.com/agent-root/cli/discussions
     about: Use Discussions for open-ended conversation.
   - name: Security vulnerability disclosure
-    url: https://github.com/d3-inc/agentroot/security/advisories/new
+    url: https://github.com/agent-root/cli/security/advisories/new
     about: Privately report security issues. Do NOT file a public issue.
   - name: Protocol-level proposals
     url: https://github.com/d3-inc/agentroot/issues/new?template=protocol_change.yml

@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/agent-root.svg)](https://www.npmjs.com/package/agent-root)
 [![license](https://img.shields.io/npm/l/agent-root.svg)](LICENSE)
 [![Node](https://img.shields.io/node/v/agent-root.svg)](https://nodejs.org/)
-[![CI](https://github.com/d3-inc/agentroot/actions/workflows/ci.yml/badge.svg)](https://github.com/d3-inc/agentroot/actions/workflows/ci.yml)
+[![CI](https://github.com/agent-root/cli/actions/workflows/ci.yml/badge.svg)](https://github.com/agent-root/cli/actions/workflows/ci.yml)
 
 The command-line client for the **AgentRoot protocol**. Resolve domains, search the public registry, install skills, MCP servers, and agents into Claude, Cursor, Codex, Gemini, or any AgentRoot-aware tool.
 
@@ -563,7 +563,7 @@ Source layout is in [CLAUDE.md](CLAUDE.md#project-layout).
 Bug reports, fixes, docs, new commands, flags, and tool integrations all welcome.
 
 - **Bug or feature**: use the [bug report](.github/ISSUE_TEMPLATE/bug_report.yml) or [feature request](.github/ISSUE_TEMPLATE/feature_request.yml) template; first-response within ~7 days.
-- **Question**: open a [Discussion](https://github.com/d3-inc/agentroot/discussions) (once enabled). Best-effort, no SLA.
+- **Question**: open a [Discussion](https://github.com/agent-root/cli/discussions) (once enabled). Best-effort, no SLA.
 - **Code change**: fork, branch, PR against `main`. Full flow in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md).
 - **Reading the code**: [CLAUDE.md](CLAUDE.md) covers file ordering, exit codes, streams, single source of truth.
 - **Find something to work on**: filter issues by `good first issue` or `help wanted`.

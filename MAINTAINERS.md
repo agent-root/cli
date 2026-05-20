@@ -34,6 +34,6 @@ See [GOVERNANCE.md#adding-a-new-maintainer](GOVERNANCE.md#adding-a-new-maintaine
 
 ## Reaching maintainers
 
-- For project questions, open a [Discussion](https://github.com/d3-inc/agentroot/discussions) (once enabled).
+- For project questions, open a [Discussion](https://github.com/agent-root/cli/discussions) (once enabled).
 - For Code of Conduct concerns, email **mayank@d3.com**.
 - For security issues, see [SECURITY.md](.github/SECURITY.md). Do not file a public issue.

@@ -8,7 +8,7 @@ By participating, you agree to abide by the [Contributor Covenant](CODE_OF_CONDU
 
 ## Where to start
 
-- **Bug reports / feature requests**: open an [issue](https://github.com/d3-inc/agentroot/issues/new/choose). Search existing issues first.
+- **Bug reports / feature requests**: open an [issue](https://github.com/agent-root/cli/issues/new/choose). Search existing issues first.
 - **Documentation**: PRs to README welcome anytime; no prior issue required.
 - **Looking for something to work on**: filter open issues by the `good first issue` or `help wanted` labels.
 - **Protocol-level changes** (new record types, manifest schema): those go to the main [agentroot repo](https://github.com/d3-inc/agentroot), not this one. The CLI consumes the protocol; it doesn't define it.
@@ -41,7 +41,7 @@ git clone https://github.com/<your-username>/agentroot.git
 cd agentroot   # or: cd agent-root-cli, once the standalone repo is live
 
 # Track the canonical repo as 'upstream' so you can pull in changes
-git remote add upstream https://github.com/d3-inc/agentroot.git
+git remote add upstream https://github.com/agent-root/cli.git
 git remote -v   # confirm: origin = your fork, upstream = canonical
 ```
 
@@ -124,7 +124,7 @@ Branch naming convention:
 git push -u origin feature/short-description
 ```
 
-GitHub will print a URL to open a pull request. The base repo is `d3-inc/agentroot` (or the canonical standalone repo once it is live), base branch `main`. Head is your fork's feature branch.
+GitHub will print a URL to open a pull request. The base repo is `agent-root/cli`, base branch `main`. Head is your fork's feature branch.
 
 ### Review requirements
 

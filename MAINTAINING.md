@@ -7,7 +7,7 @@ Operational reference for maintainers: what the repo admin does on GitHub and ho
 Re-apply if state drifts:
 
 ```bash
-gh repo edit agent-root/agent-root-cli \
+gh repo edit agent-root/cli \
   --enable-squash-merge \
   --enable-merge-commit=false \
   --enable-rebase-merge=false \
@@ -26,13 +26,13 @@ gh repo edit agent-root/agent-root-cli \
 | Allow update branch | on | Lets PR authors click "Update branch" to fast-forward without losing review state. |
 | Issues | on | Required for the bug-report and feature-request templates. |
 | Wiki | off | Docs live in-repo (`README.md`, `GOVERNANCE.md`, `MAINTAINERS.md`, `docs/`). |
-| Discussions | off (for now) | When you flip this on, update [.github/SUPPORT.md](.github/SUPPORT.md) and [MAINTAINERS.md](MAINTAINERS.md) to remove "(once enabled)" notes. Run `gh repo edit agent-root/agent-root-cli --enable-discussions`. |
+| Discussions | off (for now) | When you flip this on, update [.github/SUPPORT.md](.github/SUPPORT.md) and [MAINTAINERS.md](MAINTAINERS.md) to remove "(once enabled)" notes. Run `gh repo edit agent-root/cli --enable-discussions`. |
 | Projects | off | Not used at this size. |
 
 Verify current state:
 
 ```bash
-gh api /repos/agent-root/agent-root-cli \
+gh api /repos/agent-root/cli \
   | jq '{private, allow_squash_merge, allow_merge_commit, allow_rebase_merge, delete_branch_on_merge, allow_update_branch, has_issues, has_projects, has_wiki, has_discussions}'
 ```
 
@@ -72,7 +72,7 @@ cat > /tmp/agent-root-cli-bp.json <<'JSON'
   "required_conversation_resolution": true
 }
 JSON
-gh api -X PUT /repos/agent-root/agent-root-cli/branches/main/protection \
+gh api -X PUT /repos/agent-root/cli/branches/main/protection \
   --input /tmp/agent-root-cli-bp.json
 rm /tmp/agent-root-cli-bp.json
 ```
@@ -80,7 +80,7 @@ rm /tmp/agent-root-cli-bp.json
 Verify:
 
 ```bash
-gh api /repos/agent-root/agent-root-cli/branches/main/protection | jq .
+gh api /repos/agent-root/cli/branches/main/protection | jq .
 ```
 
 If the `Build / Type-check (Node 22)` context doesn't exist yet (CI hasn't run on `main` since the rule was set), GitHub records the rule but doesn't block until the first CI run completes. The next push triggers CI and the rule is enforced from then on.
@@ -92,8 +92,8 @@ If the `Build / Type-check (Node 22)` context doesn't exist yet (CI hasn't run o
 The repo is private. To grant maintainer access:
 
 ```bash
-gh api -X PUT /repos/agent-root/agent-root-cli/collaborators/AlexSugak --field permission=push
-gh api -X PUT /repos/agent-root/agent-root-cli/collaborators/isingh    --field permission=push
+gh api -X PUT /repos/agent-root/cli/collaborators/AlexSugak --field permission=push
+gh api -X PUT /repos/agent-root/cli/collaborators/isingh    --field permission=push
 ```
 
 Permissions: `pull`, `triage`, `push`, `maintain`, `admin`. `push` is the right level for a maintainer; `admin` is reserved for the repo owner.
@@ -110,8 +110,8 @@ Two workflows ship: `.github/workflows/ci.yml` (build, type-check, vitest, smoke
 List or re-run jobs:
 
 ```bash
-gh run list --repo agent-root/agent-root-cli --limit 5
-gh run rerun <run-id> --repo agent-root/agent-root-cli --failed
+gh run list --repo agent-root/cli --limit 5
+gh run rerun <run-id> --repo agent-root/cli --failed
 ```
 
 ## Releasing
@@ -125,7 +125,7 @@ git push origin v0.X.Y
 # Manual publish (no provenance / OIDC wiring yet):
 pnpm publish --access public
 # Create a GitHub release pointing at the tag:
-gh release create v0.X.Y --notes-from-tag --repo agent-root/agent-root-cli
+gh release create v0.X.Y --notes-from-tag --repo agent-root/cli
 ```
 
 When the publish flow is automated, this section moves to a dedicated `RELEASING.md`.
@@ -179,10 +179,10 @@ The `~/.gitconfig-d3` include is the canonical source for d3-repos identity; per
 
 | Operation | Command |
 |---|---|
-| Verify repo settings | `gh api /repos/agent-root/agent-root-cli \| jq '{private, allow_squash_merge, delete_branch_on_merge, has_issues, has_discussions}'` |
-| List branches with protection | `gh api /repos/agent-root/agent-root-cli/branches \| jq '.[] \| {name, protected}'` |
-| Pull current branch protection JSON | `gh api /repos/agent-root/agent-root-cli/branches/main/protection \| jq .` |
-| List collaborators | `gh api /repos/agent-root/agent-root-cli/collaborators \| jq '.[] \| {login, permissions}'` |
-| List recent runs | `gh run list --repo agent-root/agent-root-cli --limit 10` |
-| Failed-run logs | `gh run view <run-id> --repo agent-root/agent-root-cli --log-failed` |
-| Make public when ready | `gh repo edit agent-root/agent-root-cli --visibility=public --accept-visibility-change-consequences` |
+| Verify repo settings | `gh api /repos/agent-root/cli \| jq '{private, allow_squash_merge, delete_branch_on_merge, has_issues, has_discussions}'` |
+| List branches with protection | `gh api /repos/agent-root/cli/branches \| jq '.[] \| {name, protected}'` |
+| Pull current branch protection JSON | `gh api /repos/agent-root/cli/branches/main/protection \| jq .` |
+| List collaborators | `gh api /repos/agent-root/cli/collaborators \| jq '.[] \| {login, permissions}'` |
+| List recent runs | `gh run list --repo agent-root/cli --limit 10` |
+| Failed-run logs | `gh run view <run-id> --repo agent-root/cli --log-failed` |
+| Make public when ready | `gh repo edit agent-root/cli --visibility=public --accept-visibility-change-consequences` |
