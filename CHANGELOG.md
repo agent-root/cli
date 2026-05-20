@@ -4,6 +4,15 @@ All notable changes to the `agent-root` CLI are documented in this file. Format 
 
 ## [Unreleased]
 
+## [0.3.0] 2026-05-20
+
+First standalone release. Same npm package name (`agent-root`) as the
+monorepo-published `0.2.0`; this version is the first cut from the
+independent `agent-root/cli` repo. The package is now wholly maintained
+under [agent-root/cli](https://github.com/agent-root/cli); the monorepo
+copy is preserved for historical reference but no longer the source of
+truth for new releases.
+
 ### Added
 
 #### CLI hardening (Batch 4 — polish + discoverability)

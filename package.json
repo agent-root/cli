@@ -1,6 +1,6 @@
 {
   "name": "agent-root",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CLI for the AgentRoot protocol. Resolve domains via DNS, discover AI capabilities, install skills and MCP servers.",
   "bin": {
     "agent-root": "./dist/bin/agentroot.js",
