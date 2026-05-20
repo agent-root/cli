@@ -166,7 +166,7 @@ error Unknown command: reslove
 For bug reports, paste `agent-root version`:
 
 ```text
-agent-root 0.2.0
+agent-root 0.3.0
 node v22.14.0
 os   darwin/arm64
 api  https://www.agentroot.io

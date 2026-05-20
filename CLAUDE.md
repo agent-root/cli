@@ -131,6 +131,31 @@ Smoke test recipe lives in `TESTING.md`.
 
 **Rule of thumb:** if a user could be surprised by your change without reading the diff, the README must reflect it.
 
+### Don't ship references that point at something that doesn't exist yet
+
+A class of bug we've already shipped twice and reverted: changing a primary thing (package name, version, repo URL) and dragging related external references along **without checking they resolve**. Concrete examples:
+
+- README badges that fetch from npm — broke when we renamed `agent-root` → `@agent-root/cli` before the scoped package was published.
+- README "Version & environment" sample that hardcoded `agent-root 0.2.0` — went stale the moment `package.json.version` bumped.
+- Issue-template `config.yml` contact link to GitHub Discussions — pretended Discussions was live while it was disabled on the repo.
+
+When you change any of:
+
+- `package.json` name / version / repository.url / bugs.url
+- The repo's GitHub URL (org or repo rename)
+- Any feature toggle on GitHub (Discussions, Wiki, Pages)
+- Any deployment URL
+
+…then **grep for every reference to the old value in `README.md`, `CHANGELOG.md`, `.github/`, and the rest of the docs**, and verify each new reference resolves to a real thing (or document why it doesn't yet). For external URLs (badges, package pages, registry endpoints), either confirm the URL returns 200 or replace with a static value until the dependency is published.
+
+Static badge fallback when an external service isn't ready yet:
+
+```markdown
+[![version](https://img.shields.io/badge/version-X.Y.Z-blue.svg)](https://github.com/owner/repo/releases)
+```
+
+is always better than a dynamic badge that renders "not found".
+
 ## Single source of truth
 
 - **Version**: `package.json` `version`. Read at runtime via `src/services/http/package-info.ts`. Never hardcode a version anywhere else.

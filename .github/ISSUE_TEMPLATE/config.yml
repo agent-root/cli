@@ -1,8 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: GitHub Discussions — questions, ideas, design
-    url: https://github.com/agent-root/cli/discussions
-    about: Use Discussions for open-ended conversation.
+  # Re-enable the Discussions row once `gh repo edit agent-root/cli --enable-discussions`
+  # has been run AND the repo is public. Until then this URL 404s, which is worse than
+  # not offering the route at all. Tracked in MAINTAINING.md "When you flip Discussions on".
+  # - name: GitHub Discussions — questions, ideas, design
+  #   url: https://github.com/agent-root/cli/discussions
+  #   about: Use Discussions for open-ended conversation.
   - name: Security vulnerability disclosure
     url: https://github.com/agent-root/cli/security/advisories/new
     about: Privately report security issues. Do NOT file a public issue.
