@@ -582,4 +582,4 @@ See [GOVERNANCE.md](GOVERNANCE.md) for decision-making and how maintainers are a
 
 ## License
 
-[MIT](LICENSE) © D3 Inc and AgentRoot contributors.
+[MIT](LICENSE) © D3 Global, Inc. and AgentRoot contributors.
