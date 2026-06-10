@@ -44,6 +44,10 @@ export interface SearchResult {
   transport?: string | null;
   index?: string | null;
   capabilities?: string[] | null;
+  /** Match provenance — set only on hits from the semantic (/api/search) tier. */
+  match?: 'hybrid' | 'vector' | 'keyword';
+  /** True only for semantic-tier hits (keyword search returned nothing). */
+  approximate?: boolean;
 }
 
 export interface SearchEnvelope {
@@ -75,6 +79,30 @@ interface RecordsApiResponse {
   total?: number;
   page?: number;
   pages?: number;
+}
+
+/** A single hit from the registry's hybrid /api/search endpoint (BM25 + vector RRF). */
+export interface SemanticSearchHit {
+  id: number;
+  record_id: string;
+  domain: string;
+  type: string;
+  name: string | null;
+  description: string | null;
+  manifest_url: string | null;
+  rrf_score: number;
+  bm25_rank: number | null;
+  vector_rank: number | null;
+}
+
+/** Response envelope from GET /api/search. */
+export interface SemanticSearchResponse {
+  query: string;
+  type_filter: string | null;
+  results: SemanticSearchHit[];
+  total: number;
+  /** True when the embedder is unavailable; results are BM25-only. */
+  degraded: boolean;
 }
 
 type ManifestRecord = {
@@ -137,6 +165,38 @@ export function recordToSearchResult(row: RecordsApiRow): SearchResult {
     index: (raw['index'] ?? null) as string | null,
     capabilities: caps,
   };
+}
+
+/**
+ * Map a /api/search hit onto the shared SearchResult shape, tagged `approximate`
+ * so the display + JSON layers can flag it. `verified` is true because the
+ * hybrid SQL only returns rows with status='active'.
+ */
+export function semanticHitToSearchResult(hit: SemanticSearchHit): SearchResult {
+  const recordId = String(hit.record_id ?? '');
+  return {
+    domain: String(hit.domain ?? ''),
+    type: String(hit.type ?? 'skill'),
+    id: recordId,
+    record_id: recordId,
+    name: hit.name ?? recordId,
+    description: hit.description ?? '',
+    address: `${hit.domain}/${recordId}`,
+    verified: true,
+    match: matchKind(hit),
+    approximate: true,
+  };
+}
+
+/**
+ * Classify a hybrid-search hit by which signal(s) ranked it, for an intuitive
+ * match-type tag. When the embedder is offline the registry returns BM25-only
+ * hits (vector_rank null), which classify as 'keyword' — the degraded signal.
+ */
+export function matchKind(hit: SemanticSearchHit): 'hybrid' | 'vector' | 'keyword' {
+  if (hit.bm25_rank !== null && hit.vector_rank !== null) return 'hybrid';
+  if (hit.vector_rank !== null) return 'vector';
+  return 'keyword';
 }
 
 interface FetchRecordsPageOpts {

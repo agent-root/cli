@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { clampLimit, clampPage, recordToSearchResult } from '../../src/commands/search';
+import { clampLimit, clampPage, recordToSearchResult, matchKind, semanticHitToSearchResult, type SemanticSearchHit } from '../../src/commands/search';
+
+const semHit = (over: Partial<SemanticSearchHit> = {}): SemanticSearchHit => ({
+  id: 1,
+  record_id: 'usdc-checkout',
+  domain: 'doma.xyz',
+  type: 'skill',
+  name: 'USDC Checkout',
+  description: 'Accept USDC payments via Coinbase Commerce',
+  manifest_url: null,
+  rrf_score: 0.0325,
+  bm25_rank: 1,
+  vector_rank: 2,
+  ...over,
+});
 
 describe('clampLimit', () => {
   it('returns the default for undefined input', () => {
@@ -123,5 +137,38 @@ describe('recordToSearchResult', () => {
   it('defaults type to skill when missing (legacy rows)', () => {
     const r = recordToSearchResult({ domain: 'foo.io', record_id: 'x' });
     expect(r.type).toBe('skill');
+  });
+});
+
+describe('matchKind', () => {
+  it('returns hybrid when both bm25 and vector ranks are present', () => {
+    expect(matchKind(semHit())).toBe('hybrid');
+  });
+
+  it('returns vector when only vector_rank is present', () => {
+    expect(matchKind(semHit({ bm25_rank: null }))).toBe('vector');
+  });
+
+  it('returns keyword when only bm25_rank is present (degraded / BM25-only)', () => {
+    expect(matchKind(semHit({ vector_rank: null }))).toBe('keyword');
+  });
+});
+
+describe('semanticHitToSearchResult', () => {
+  it('maps a hit to an approximate SearchResult with address + match tag', () => {
+    const r = semanticHitToSearchResult(semHit());
+    expect(r.domain).toBe('doma.xyz');
+    expect(r.type).toBe('skill');
+    expect(r.id).toBe('usdc-checkout');
+    expect(r.record_id).toBe('usdc-checkout');
+    expect(r.name).toBe('USDC Checkout');
+    expect(r.address).toBe('doma.xyz/usdc-checkout');
+    expect(r.verified).toBe(true);
+    expect(r.approximate).toBe(true);
+    expect(r.match).toBe('hybrid');
+  });
+
+  it('falls back to record_id when name is null', () => {
+    expect(semanticHitToSearchResult(semHit({ name: null })).name).toBe('usdc-checkout');
   });
 });
