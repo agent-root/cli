@@ -1,5 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { clampLimit, clampPage, recordToSearchResult, matchKind, semanticHitToSearchResult, searchSemantic, searchWithFallback, type SemanticSearchHit, type SemanticSearchResponse } from '../../src/commands/search';
+import { clampLimit, clampPage, recordToSearchResult, matchKind, semanticHitToSearchResult, searchSemantic, searchWithFallback, displayResults, cmdSearch, type SemanticSearchHit, type SemanticSearchResponse } from '../../src/commands/search';
+
+const stripAnsi = (s: string): string => s.replace(/\[[0-9;]*m/g, '');
 import { fetchJSON } from '../../src/services/http/fetch';
 
 // Mock the HTTP layer so searchSemantic tests don't hit the network. Preserve
@@ -263,5 +265,45 @@ describe('searchWithFallback ordering', () => {
     routeByUrl({ records: { records: [], total: 0, page: 1, pages: 0 } });
     await searchWithFallback('usdc', '', { noSemantic: true });
     expect(calledSearch()).toBe(false);
+  });
+});
+
+describe('displayResults approximate framing', () => {
+  it('prints a closest-semantic-matches header and a match tag for approximate results', () => {
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    displayResults([semanticHitToSearchResult(semHit())]);
+    const out = stripAnsi(spy.mock.calls.map(c => c.join(' ')).join('\n'));
+    spy.mockRestore();
+    expect(out).toContain('closest semantic matches');
+    expect(out).toContain('{hybrid}');
+  });
+
+  it('does NOT print the semantic header for normal keyword results', () => {
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    displayResults([recordToSearchResult({ domain: 'a.io', record_id: 'r', type: 'mcp', name: 'R' })]);
+    const out = stripAnsi(spy.mock.calls.map(c => c.join(' ')).join('\n'));
+    spy.mockRestore();
+    expect(out).not.toContain('closest semantic matches');
+    expect(out).not.toContain('{');
+  });
+});
+
+describe('cmdSearch --json approximate flag', () => {
+  beforeEach(() => mockFetchJSON.mockReset());
+
+  it('includes approximate:true in JSON when results come from the semantic tier', async () => {
+    mockFetchJSON.mockImplementation(((url?: string) => {
+      const u = String(url ?? '');
+      if (u.includes('/api/records')) return Promise.resolve({ records: [], total: 0, page: 1, pages: 0 });
+      if (u.includes('/api/search')) return Promise.resolve({ query: 'usdc', type_filter: null, total: 1, degraded: false, results: [semHit()] });
+      return Promise.resolve({ records: [] });
+    }) as typeof fetchJSON);
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await cmdSearch(['usdc'], { json: true });
+    const out = spy.mock.calls.map(c => String(c[0])).join('\n');
+    spy.mockRestore();
+    const parsed = JSON.parse(out);
+    expect(parsed.approximate).toBe(true);
+    expect(parsed.results[0].match).toBe('hybrid');
   });
 });

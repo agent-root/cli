@@ -381,14 +381,22 @@ export async function searchWithFallback(query: string, typeFilter: string, flag
 }
 
 export function displayResults(results: SearchResult[]): void {
+  // Semantic-tier results are approximate; lead with a header so the user knows
+  // these are closest matches, not exact keyword hits.
+  if (results.some(r => r?.approximate)) {
+    console.log(`  ${colors.dim('// no exact match — closest semantic matches:')}`);
+    console.log();
+  }
   for (let i = 0; i < results.length; i++) {
     const r = results[i];
     if (!r) continue;
     const typeLabel = RECORD_TYPES[r.type] ?? r.type;
     const addr = r.address ?? `${r.domain}/${r.id ?? r.record_id}`;
     const verified = r.verified ? colors.green(' ✓') : '';
+    // Match-type tag ({hybrid}/{vector}/{keyword}) appears only on semantic hits.
+    const matchTag = r.match ? ` ${colors.dim(`{${r.match}}`)}` : '';
     const num = colors.dim(`${i + 1}.`);
-    console.log(`  ${num} ${colors.bold(r.name ?? r.id ?? '')} ${colors.dim(`[${typeLabel}]`)} ${colors.dim(`(${addr})`)}${verified}`);
+    console.log(`  ${num} ${colors.bold(r.name ?? r.id ?? '')} ${colors.dim(`[${typeLabel}]`)} ${colors.dim(`(${addr})`)}${verified}${matchTag}`);
     if (r.description) {
       console.log(`     ${colors.dim(r.description)}`);
     }
@@ -527,7 +535,7 @@ export async function cmdSearch(positional: string[], flags: Record<string, unkn
   if (envelope.results.length === 0) {
     spinner.warn({ text: 'No records found' });
     if (flags['json']) {
-      console.log(JSON.stringify({ results: [], total: 0, page, pages: 0, limit }, null, 2));
+      console.log(JSON.stringify({ results: [], total: 0, page, pages: 0, limit, approximate: false }, null, 2));
     }
     return;
   }
@@ -535,7 +543,10 @@ export async function cmdSearch(positional: string[], flags: Record<string, unkn
   spinner.success({ text: envelope.results.length + ' result(s) found' });
 
   if (flags['json']) {
-    console.log(JSON.stringify(envelope, null, 2));
+    // `approximate` is true when these results came from the semantic fallback
+    // tier — lets scripts distinguish exact keyword hits from closest matches.
+    const approximate = envelope.results.some(r => r.approximate === true);
+    console.log(JSON.stringify({ ...envelope, approximate }, null, 2));
     return;
   }
 
