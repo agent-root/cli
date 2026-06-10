@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { clampLimit, clampPage, recordToSearchResult, matchKind, semanticHitToSearchResult, searchSemantic, type SemanticSearchHit, type SemanticSearchResponse } from '../../src/commands/search';
+import { clampLimit, clampPage, recordToSearchResult, matchKind, semanticHitToSearchResult, searchSemantic, searchWithFallback, type SemanticSearchHit, type SemanticSearchResponse } from '../../src/commands/search';
 import { fetchJSON } from '../../src/services/http/fetch';
 
 // Mock the HTTP layer so searchSemantic tests don't hit the network. Preserve
@@ -222,5 +222,46 @@ describe('searchSemantic', () => {
     expect(url).toContain('/api/search?');
     expect(url).toContain('type=skill');
     expect(url).toContain('limit=50');
+  });
+});
+
+describe('searchWithFallback ordering', () => {
+  beforeEach(() => mockFetchJSON.mockReset());
+
+  function routeByUrl(map: { records?: unknown; search?: unknown; findSkills?: unknown }): void {
+    mockFetchJSON.mockImplementation(((url?: string) => {
+      const u = String(url ?? '');
+      if (u.includes('/api/records')) return Promise.resolve(map.records ?? { records: [] });
+      if (u.includes('/api/search')) return Promise.resolve(map.search ?? { results: [] });
+      if (u.includes('/api/find-skills')) return Promise.resolve(map.findSkills ?? { skills: [] });
+      // Manifest-probe + anything else: benign empty manifest (no records).
+      return Promise.resolve({ records: [] });
+    }) as typeof fetchJSON);
+  }
+
+  const calledSearch = (): boolean =>
+    mockFetchJSON.mock.calls.some(c => String(c[0]).includes('/api/search'));
+
+  it('does NOT call /api/search when /api/records has hits', async () => {
+    routeByUrl({ records: { records: [{ domain: 'a.io', record_id: 'r', type: 'mcp', name: 'R', status: 'active', manifest_status: 'active' }], total: 1, page: 1, pages: 1 } });
+    const out = await searchWithFallback('r', '', {});
+    expect(out).toHaveLength(1);
+    expect(out[0]?.approximate).toBeUndefined();
+    expect(calledSearch()).toBe(false);
+  });
+
+  it('falls back to /api/search and returns approximate hits when records is empty', async () => {
+    routeByUrl({ records: { records: [], total: 0, page: 1, pages: 0 }, search: { query: 'usdc', type_filter: null, total: 1, degraded: false, results: [semHit()] } });
+    const out = await searchWithFallback('usdc', '', {});
+    expect(out).toHaveLength(1);
+    expect(out[0]?.approximate).toBe(true);
+    expect(out[0]?.match).toBe('hybrid');
+    expect(calledSearch()).toBe(true);
+  });
+
+  it('skips the semantic tier when noSemantic is set', async () => {
+    routeByUrl({ records: { records: [], total: 0, page: 1, pages: 0 } });
+    await searchWithFallback('usdc', '', { noSemantic: true });
+    expect(calledSearch()).toBe(false);
   });
 });

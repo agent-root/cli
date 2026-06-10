@@ -363,9 +363,14 @@ async function fallbackManifestProbe(query: string, typeFilter: string): Promise
  * returned nothing.
  */
 export async function searchWithFallback(query: string, typeFilter: string, flags: Record<string, unknown>): Promise<SearchResult[]> {
-  void flags;
   const env = await searchRecords(query, typeFilter, 1, DEFAULT_LIMIT);
   if (env.results.length > 0) return env.results;
+  // Semantic tier: hybrid /api/search recall before the legacy fallbacks.
+  // Opt out with --no-semantic (parsed as flags.noSemantic).
+  if (!flags['noSemantic']) {
+    const semantic = await searchSemantic(query, typeFilter, flags);
+    if (semantic.length > 0) return semantic;
+  }
   // Only chain into find-skills if the filter is open or explicitly skill,
   // it only returns skills, so calling it for type=agent etc. is wasted I/O.
   if (!typeFilter || typeFilter === 'skill') {
