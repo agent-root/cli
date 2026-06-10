@@ -145,6 +145,7 @@ OPTIONS
   --quiet, -q        Suppress non-essential output (spinners + notes)
   --no-install       Skip auto-install when resolving skill= records
   --no-color         Disable ANSI color (also auto-off in non-TTY)
+  --no-semantic      Disable the search semantic-search fallback (keyword-only)
 ```
 
 Flag names accept kebab-case (`--manifest-url`) or camelCase (`--manifestUrl`); use `--key=value` or `--key value`. Pass `--` to stop option parsing.
@@ -228,7 +229,14 @@ agent-root search doma --page 2 --limit 50
 agent-root search doma --all --type skill
 ```
 
-For scripting, `--json` returns the full envelope (`results`, `total`, `page`, `pages`, `limit`):
+When a keyword search finds nothing, the CLI automatically falls back to the registry's semantic search (hybrid keyword + vector) and shows the closest matches, each tagged `{hybrid}`, `{vector}`, or `{keyword}`. Pass `--no-semantic` to disable it and keep keyword-only behavior:
+
+```bash
+agent-root search "skill to pay in USDC"          # semantic match — no literal "usdc" needed
+agent-root search "register domain" --no-semantic # keyword-only, no fallback
+```
+
+For scripting, `--json` returns the full envelope (`results`, `total`, `page`, `pages`, `limit`, `approximate`):
 
 ```bash
 agent-root search doma --json | jq -r '.results[] | select(.type=="skill") | .address'

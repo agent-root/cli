@@ -63,17 +63,25 @@ ${section('DESCRIPTION')}
   filters narrow by record kind. Pagination is server-side; use --page /
   --limit to walk results, or --all to collect every match (capped at 1000).
 
+  When a keyword search returns no results, the CLI falls back to the registry's
+  hybrid semantic search (/api/search, keyword + vector) and shows the closest
+  matches, each tagged {hybrid}, {vector}, or {keyword}. Pass --no-semantic to
+  disable this and keep keyword-only behavior. With --json, an 'approximate'
+  boolean indicates the results came from the semantic fallback.
+
 ${section('OPTIONS')}
   --type <type>     Filter by record type: agent, mcp, skill, a2a, payment
   --page <N>        Page number (1-indexed, default 1)
   --limit <N>       Per-page limit (1..100, default 20)
   --all             Fetch every page (hard-capped at 1000)
+  --no-semantic     Disable the semantic-search fallback (keyword-only)
   --json, -j        Output as JSON envelope
   --no-color        Disable ANSI color
   --quiet, -q       Suppress progress chatter
 
 ${section('EXAMPLES')}
   agentroot search billing
+  agentroot search "skill to pay in USDC"   # semantic fallback when no keyword hit
   agentroot search "register domain" --type skill
   agentroot search doma --limit 5 --json | jq '.results[].address'
 
