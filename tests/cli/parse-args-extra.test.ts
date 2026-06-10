@@ -20,6 +20,11 @@ describe('parseArgs additional branches', () => {
     expect(r.flags['noColor']).toBe(true);
   });
 
+  it('--no-semantic is treated as a positive boolean flag (noSemantic=true)', () => {
+    const r = parseArgs(['node', 'agentroot', 'search', 'usdc', '--no-semantic']);
+    expect(r.flags['noSemantic']).toBe(true);
+  });
+
   it('--no-json sets json=false (POSIX negation)', () => {
     const r = parseArgs(['node', 'agentroot', 'install', 'x.com', '--no-json']);
     expect(r.flags['json']).toBe(false);
