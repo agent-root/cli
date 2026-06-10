@@ -1,5 +1,16 @@
-import { describe, expect, it } from 'vitest';
-import { clampLimit, clampPage, recordToSearchResult, matchKind, semanticHitToSearchResult, type SemanticSearchHit } from '../../src/commands/search';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { clampLimit, clampPage, recordToSearchResult, matchKind, semanticHitToSearchResult, searchSemantic, type SemanticSearchHit, type SemanticSearchResponse } from '../../src/commands/search';
+import { fetchJSON } from '../../src/services/http/fetch';
+
+// Mock the HTTP layer so searchSemantic tests don't hit the network. Preserve
+// the module's other exports (fetch, postJSON) via importActual so unrelated
+// importers don't break.
+vi.mock('../../src/services/http/fetch', async (importActual) => {
+  const actual = await importActual<typeof import('../../src/services/http/fetch')>();
+  return { ...actual, fetchJSON: vi.fn() };
+});
+
+const mockFetchJSON = vi.mocked(fetchJSON);
 
 const semHit = (over: Partial<SemanticSearchHit> = {}): SemanticSearchHit => ({
   id: 1,
@@ -170,5 +181,46 @@ describe('semanticHitToSearchResult', () => {
 
   it('falls back to record_id when name is null', () => {
     expect(semanticHitToSearchResult(semHit({ name: null })).name).toBe('usdc-checkout');
+  });
+});
+
+describe('searchSemantic', () => {
+  beforeEach(() => mockFetchJSON.mockReset());
+
+  const resp = (over: Partial<SemanticSearchResponse> = {}): SemanticSearchResponse => ({
+    query: 'usdc', type_filter: null, total: 0, degraded: false, results: [], ...over,
+  });
+
+  it('maps a 200 response to approximate, match-tagged results', async () => {
+    mockFetchJSON.mockResolvedValueOnce(resp({ total: 1, results: [semHit()] }));
+    const out = await searchSemantic('usdc', '', {});
+    expect(out).toHaveLength(1);
+    expect(out[0]?.approximate).toBe(true);
+    expect(out[0]?.match).toBe('hybrid');
+    expect(out[0]?.address).toBe('doma.xyz/usdc-checkout');
+  });
+
+  it('returns [] on a 429 (fetchJSON throws "HTTP 429 …")', async () => {
+    mockFetchJSON.mockRejectedValueOnce(new Error('HTTP 429 for https://www.agentroot.io/api/search?q=usdc'));
+    await expect(searchSemantic('usdc', '', {})).resolves.toEqual([]);
+  });
+
+  it('returns [] on network/5xx/timeout errors', async () => {
+    mockFetchJSON.mockRejectedValueOnce(new Error('Timeout after 30000ms fetching ...'));
+    await expect(searchSemantic('usdc', '', {})).resolves.toEqual([]);
+  });
+
+  it('returns [] when results is missing or not an array', async () => {
+    mockFetchJSON.mockResolvedValueOnce({ query: 'x', type_filter: null, total: 0, degraded: false } as unknown as SemanticSearchResponse);
+    await expect(searchSemantic('x', '', {})).resolves.toEqual([]);
+  });
+
+  it('forwards --type and caps limit at 50', async () => {
+    mockFetchJSON.mockResolvedValueOnce(resp({ type_filter: 'skill' }));
+    await searchSemantic('usdc', 'skill', { limit: '500' });
+    const url = String(mockFetchJSON.mock.calls[0]?.[0]);
+    expect(url).toContain('/api/search?');
+    expect(url).toContain('type=skill');
+    expect(url).toContain('limit=50');
   });
 });

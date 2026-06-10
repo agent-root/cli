@@ -30,6 +30,12 @@ const ALL_MODE_HARD_CAP = 1000;
  */
 const BARE_KEYWORD_TLDS: readonly string[] = ['.io', '.com'];
 
+/**
+ * `/api/search` (semantic) caps `limit` at 50 — it returns a ranked top-N, not
+ * a browsable page. We never paginate it; one request per failed keyword search.
+ */
+const SEMANTIC_MAX_LIMIT = 50;
+
 export interface SearchResult {
   domain: string;
   type: string;
@@ -165,6 +171,31 @@ export function recordToSearchResult(row: RecordsApiRow): SearchResult {
     index: (raw['index'] ?? null) as string | null,
     capabilities: caps,
   };
+}
+
+/**
+ * Semantic fallback. Queries the registry's hybrid /api/search endpoint
+ * (BM25 + pgvector RRF) and maps the hits to approximate-tagged SearchResults.
+ * One request, no pagination; limit capped at SEMANTIC_MAX_LIMIT.
+ *
+ * Mirrors the silent-catch contract of fallbackFindSkills / fallbackManifestProbe:
+ * any failure resolves to [] so searchWithFallback continues down the chain.
+ * fetch() follows 3xx, so the apex->www redirect is handled transparently.
+ */
+export async function searchSemantic(query: string, typeFilter: string, flags: Record<string, unknown>): Promise<SearchResult[]> {
+  const limit = Math.min(clampLimit(flags['limit']), SEMANTIC_MAX_LIMIT);
+  const params = new URLSearchParams({ q: query, limit: String(limit) });
+  if (typeFilter) params.set('type', typeFilter);
+  try {
+    const data = await fetchJSON<SemanticSearchResponse>(`${getApiBase()}/api/search?${params.toString()}`);
+    const hits = Array.isArray(data.results) ? data.results : [];
+    return hits.map(semanticHitToSearchResult);
+  } catch {
+    // 429 (fetchJSON throws "HTTP 429 …"), 5xx, timeout, or network error —
+    // treat exactly like "no results" so the caller falls through to the legacy
+    // find-skills / manifest-probe tiers instead of crashing the run.
+    return [];
+  }
 }
 
 /**
