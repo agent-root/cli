@@ -14,6 +14,13 @@ All notable changes to the `agent-root` CLI are documented in this file. Format 
   (keyword-only). One request per failed search; `--all` unaffected. `--json`
   gains a top-level `approximate` boolean.
 
+### Fixed
+
+- `resolve` and `install` now render MCP record tool names when a manifest
+  publishes `tools` as a string array (e.g. `["search", "get_info"]`) — previously
+  they showed an empty `tools:    , , ,` line. A shared `normalizeTools` helper
+  tolerates both the spec's `[{name, description}]` shape and plain strings.
+
 ## [0.3.0] 2026-05-20
 
 First standalone release. Cut from the independent
