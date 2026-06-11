@@ -82,6 +82,17 @@ describe('formatRecord', () => {
     expect(out).toContain('tool-a, tool-b');
   });
 
+  it('renders a string tool array as comma-joined names (regression: tools were blank)', () => {
+    const out = formatRecord({
+      id: 'r',
+      type: 'mcp',
+      _domain: 'czarcash.com',
+      tools: ['search', 'get_info', 'list_pages'],
+    });
+    expect(out).toContain('tools:');
+    expect(out).toContain('search, get_info, list_pages');
+  });
+
   it('omits caps line when capabilities array is empty', () => {
     const out = formatRecord({ id: 'r', type: 'agent', _domain: 'x.com', capabilities: [] });
     expect(out).not.toContain('caps:');

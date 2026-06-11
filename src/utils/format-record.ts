@@ -1,5 +1,6 @@
 import { colors } from '../cli/colors';
 import { RECORD_TYPES } from '../constants/record-types';
+import { normalizeTools } from './normalize-tools';
 
 export function formatRecord(r: Record<string, unknown>, indent?: string): string {
   const ind = indent || '  ';
@@ -18,8 +19,9 @@ export function formatRecord(r: Record<string, unknown>, indent?: string): strin
   if (Array.isArray(r.capabilities) && r.capabilities.length > 0) {
     out += `${ind}${colors.dim('caps:')}     ${(r.capabilities as string[]).join(', ')}\n`;
   }
-  if (Array.isArray(r.tools) && r.tools.length > 0) {
-    out += `${ind}${colors.dim('tools:')}    ${(r.tools as Array<{ name: string }>).map(t => t.name).join(', ')}\n`;
+  const tools = normalizeTools(r.tools);
+  if (tools.length > 0) {
+    out += `${ind}${colors.dim('tools:')}    ${tools.map(t => t.name).join(', ')}\n`;
   }
   return out;
 }
