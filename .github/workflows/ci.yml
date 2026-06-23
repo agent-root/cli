@@ -22,7 +22,7 @@ jobs:
       matrix:
         node: ['22', '24']
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # @agent-root/core is currently pinned to a local file:./vendor/
       # tarball because the version on npm (0.2.0) is stale and missing
