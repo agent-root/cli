@@ -9,6 +9,7 @@ import { note } from '../cli/streams';
 import { RECORD_TYPES } from '../constants/record-types';
 import { searchWithFallback, selectResult, promptSearch, type SearchResult } from './search';
 import { installSkill } from '../services/install/install-skill';
+import { normalizeTools } from '../utils/normalize-tools';
 import type { JsonOut } from '../types/install';
 
 // Re-exported for callers that still import these from this module.
@@ -44,9 +45,10 @@ export function installMcp(
   console.log(`${colors.green('found')} MCP server: ${displayName}\n`);
   if (record['description']) console.log(`  ${record['description'] as string}\n`);
 
-  if (Array.isArray(record['tools']) && record['tools'].length > 0) {
+  const tools = normalizeTools(record['tools']);
+  if (tools.length > 0) {
     console.log(`  ${colors.dim('Tools:')}`);
-    for (const t of record['tools'] as Array<{ name: string; description?: string }>) {
+    for (const t of tools) {
       console.log(`    ${colors.cyan(t.name)}${t.description ? `: ${colors.dim(t.description)}` : ''}`);
     }
     console.log();
