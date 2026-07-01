@@ -107,6 +107,7 @@ ${colors.bold('OPTIONS')}
   --quiet, -q        Suppress non-essential output (spinners + notes)
   --no-install       Skip auto-install when resolving skill= records
   --no-color         Disable ANSI color (also auto-off in non-TTY)
+  --no-semantic      Disable the search semantic-search fallback (keyword-only)
 
   Flag names accept both kebab-case (--manifest-url) and camelCase (--manifestUrl).
   Use --key=value or --key value. Use -- to end option parsing.
@@ -127,8 +128,9 @@ ${colors.bold('EXAMPLES')}
   npx agent-root resolve doma.xyz
   npx agent-root resolve doma.xyz/doma-protocol
 
-  ${colors.dim('# Search the public registry')}
+  ${colors.dim('# Search the public registry (semantic fallback on zero keyword hits)')}
   npx agent-root search doma
+  npx agent-root search "skill to pay in USDC"
   npx agent-root search "register domain" --type skill
 
   ${colors.dim('# Install a record')}

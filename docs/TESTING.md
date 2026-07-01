@@ -77,14 +77,24 @@ agent-root search payments --json
 ```
 
 Expected: exit `0`. Valid JSON. Top-level keys are
-`results`, `total`, `page`, `pages`, `limit`. This is the full envelope,
-not a bare array.
+`results`, `total`, `page`, `pages`, `limit`, `approximate`. This is the full
+envelope, not a bare array.
 
 ```bash
 agent-root search doma --page 2 --limit 5 --json
 ```
 
 Expected: exit `0`. `page=2`, `limit=5`, up to 5 entries in `results`.
+
+```bash
+agent-root search "skill to pay in USDC"
+agent-root search "skill to pay in USDC" --no-semantic
+```
+
+Expected: both exit `0`. The first may print a
+`// no exact match — closest semantic matches:` header with records tagged
+`{hybrid}`/`{vector}`/`{keyword}` (the semantic fallback fires only when the
+keyword search returns nothing); the second never shows that section.
 
 ### health
 
@@ -292,12 +302,17 @@ MONO=../agentroot/packages/cli/dist/bin/agentroot.js
 # (cd ../agentroot && pnpm --filter agent-root build)
 
 diff <(node $CLI resolve agentroot.io) <(node $MONO resolve agentroot.io)
-diff <(node $CLI search payments --json) <(node $MONO search payments --json)
 diff <(node $CLI list --json) <(node $MONO list --json)
 ```
 
-Expected: zero differences for `resolve` and `search`. `list` output should
-also match (same on-disk store).
+Expected: zero differences for `resolve`. `list` output should also match
+(same on-disk store).
+
+> `search` is **intentionally no longer byte-for-byte** with the monorepo CLI:
+> the standalone adds the semantic-search fallback (`/api/search`) plus an
+> `approximate` field in the `--json` envelope, neither of which the monorepo
+> `packages/cli` has. The standalone repo is the source of truth — do not diff
+> `search` output against the monorepo.
 
 For `install --json` parity (paths embed `$HOME` and `$PWD`, so normalize
 those before diffing):

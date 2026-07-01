@@ -14,7 +14,7 @@ export interface ParsedArgs {
  */
 const BOOLEAN_FLAGS: ReadonlySet<string> = new Set([
   'all', 'project', 'help', 'json', 'force', 'yes', 'version', 'quiet',
-  'noInstall', 'noColor',
+  'noInstall', 'noColor', 'noSemantic',
 ]);
 
 /**
@@ -42,7 +42,7 @@ const SHORT_ALIASES: Record<string, string> = {
  * normalizes to `noInstall`).
  */
 const POSITIVE_NO_FLAGS: ReadonlySet<string> = new Set([
-  'noInstall', 'noColor',
+  'noInstall', 'noColor', 'noSemantic',
 ]);
 
 /**

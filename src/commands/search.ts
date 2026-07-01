@@ -30,6 +30,12 @@ const ALL_MODE_HARD_CAP = 1000;
  */
 const BARE_KEYWORD_TLDS: readonly string[] = ['.io', '.com'];
 
+/**
+ * `/api/search` (semantic) caps `limit` at 50 — it returns a ranked top-N, not
+ * a browsable page. We never paginate it; one request per failed keyword search.
+ */
+const SEMANTIC_MAX_LIMIT = 50;
+
 export interface SearchResult {
   domain: string;
   type: string;
@@ -44,6 +50,10 @@ export interface SearchResult {
   transport?: string | null;
   index?: string | null;
   capabilities?: string[] | null;
+  /** Match provenance — set only on hits from the semantic (/api/search) tier. */
+  match?: 'hybrid' | 'vector' | 'keyword';
+  /** True only for semantic-tier hits (keyword search returned nothing). */
+  approximate?: boolean;
 }
 
 export interface SearchEnvelope {
@@ -75,6 +85,30 @@ interface RecordsApiResponse {
   total?: number;
   page?: number;
   pages?: number;
+}
+
+/** A single hit from the registry's hybrid /api/search endpoint (BM25 + vector RRF). */
+export interface SemanticSearchHit {
+  id: number;
+  record_id: string;
+  domain: string;
+  type: string;
+  name: string | null;
+  description: string | null;
+  manifest_url: string | null;
+  rrf_score: number;
+  bm25_rank: number | null;
+  vector_rank: number | null;
+}
+
+/** Response envelope from GET /api/search. */
+export interface SemanticSearchResponse {
+  query: string;
+  type_filter: string | null;
+  results: SemanticSearchHit[];
+  total: number;
+  /** True when the embedder is unavailable; results are BM25-only. */
+  degraded: boolean;
 }
 
 type ManifestRecord = {
@@ -137,6 +171,63 @@ export function recordToSearchResult(row: RecordsApiRow): SearchResult {
     index: (raw['index'] ?? null) as string | null,
     capabilities: caps,
   };
+}
+
+/**
+ * Semantic fallback. Queries the registry's hybrid /api/search endpoint
+ * (BM25 + pgvector RRF) and maps the hits to approximate-tagged SearchResults.
+ * One request, no pagination; limit capped at SEMANTIC_MAX_LIMIT.
+ *
+ * Mirrors the silent-catch contract of fallbackFindSkills / fallbackManifestProbe:
+ * any failure resolves to [] so searchWithFallback continues down the chain.
+ * fetch() follows 3xx, so the apex->www redirect is handled transparently.
+ */
+export async function searchSemantic(query: string, typeFilter: string, flags: Record<string, unknown>): Promise<SearchResult[]> {
+  const limit = Math.min(clampLimit(flags['limit']), SEMANTIC_MAX_LIMIT);
+  const params = new URLSearchParams({ q: query, limit: String(limit) });
+  if (typeFilter) params.set('type', typeFilter);
+  try {
+    const data = await fetchJSON<SemanticSearchResponse>(`${getApiBase()}/api/search?${params.toString()}`);
+    const hits = Array.isArray(data.results) ? data.results : [];
+    return hits.map(semanticHitToSearchResult);
+  } catch {
+    // 429 (fetchJSON throws "HTTP 429 …"), 5xx, timeout, or network error —
+    // treat exactly like "no results" so the caller falls through to the legacy
+    // find-skills / manifest-probe tiers instead of crashing the run.
+    return [];
+  }
+}
+
+/**
+ * Map a /api/search hit onto the shared SearchResult shape, tagged `approximate`
+ * so the display + JSON layers can flag it. `verified` is true because the
+ * hybrid SQL only returns rows with status='active'.
+ */
+export function semanticHitToSearchResult(hit: SemanticSearchHit): SearchResult {
+  const recordId = String(hit.record_id ?? '');
+  return {
+    domain: String(hit.domain ?? ''),
+    type: String(hit.type ?? 'skill'),
+    id: recordId,
+    record_id: recordId,
+    name: hit.name ?? recordId,
+    description: hit.description ?? '',
+    address: `${hit.domain}/${recordId}`,
+    verified: true,
+    match: matchKind(hit),
+    approximate: true,
+  };
+}
+
+/**
+ * Classify a hybrid-search hit by which signal(s) ranked it, for an intuitive
+ * match-type tag. When the embedder is offline the registry returns BM25-only
+ * hits (vector_rank null), which classify as 'keyword' — the degraded signal.
+ */
+export function matchKind(hit: SemanticSearchHit): 'hybrid' | 'vector' | 'keyword' {
+  if (hit.bm25_rank !== null && hit.vector_rank !== null) return 'hybrid';
+  if (hit.vector_rank !== null) return 'vector';
+  return 'keyword';
 }
 
 interface FetchRecordsPageOpts {
@@ -272,9 +363,14 @@ async function fallbackManifestProbe(query: string, typeFilter: string): Promise
  * returned nothing.
  */
 export async function searchWithFallback(query: string, typeFilter: string, flags: Record<string, unknown>): Promise<SearchResult[]> {
-  void flags;
   const env = await searchRecords(query, typeFilter, 1, DEFAULT_LIMIT);
   if (env.results.length > 0) return env.results;
+  // Semantic tier: hybrid /api/search recall before the legacy fallbacks.
+  // Opt out with --no-semantic (parsed as flags.noSemantic).
+  if (!flags['noSemantic']) {
+    const semantic = await searchSemantic(query, typeFilter, flags);
+    if (semantic.length > 0) return semantic;
+  }
   // Only chain into find-skills if the filter is open or explicitly skill,
   // it only returns skills, so calling it for type=agent etc. is wasted I/O.
   if (!typeFilter || typeFilter === 'skill') {
@@ -285,14 +381,22 @@ export async function searchWithFallback(query: string, typeFilter: string, flag
 }
 
 export function displayResults(results: SearchResult[]): void {
+  // Semantic-tier results are approximate; lead with a header so the user knows
+  // these are closest matches, not exact keyword hits.
+  if (results.some(r => r?.approximate)) {
+    console.log(`  ${colors.dim('// no exact match — closest semantic matches:')}`);
+    console.log();
+  }
   for (let i = 0; i < results.length; i++) {
     const r = results[i];
     if (!r) continue;
     const typeLabel = RECORD_TYPES[r.type] ?? r.type;
     const addr = r.address ?? `${r.domain}/${r.id ?? r.record_id}`;
     const verified = r.verified ? colors.green(' ✓') : '';
+    // Match-type tag ({hybrid}/{vector}/{keyword}) appears only on semantic hits.
+    const matchTag = r.match ? ` ${colors.dim(`{${r.match}}`)}` : '';
     const num = colors.dim(`${i + 1}.`);
-    console.log(`  ${num} ${colors.bold(r.name ?? r.id ?? '')} ${colors.dim(`[${typeLabel}]`)} ${colors.dim(`(${addr})`)}${verified}`);
+    console.log(`  ${num} ${colors.bold(r.name ?? r.id ?? '')} ${colors.dim(`[${typeLabel}]`)} ${colors.dim(`(${addr})`)}${verified}${matchTag}`);
     if (r.description) {
       console.log(`     ${colors.dim(r.description)}`);
     }
@@ -431,7 +535,7 @@ export async function cmdSearch(positional: string[], flags: Record<string, unkn
   if (envelope.results.length === 0) {
     spinner.warn({ text: 'No records found' });
     if (flags['json']) {
-      console.log(JSON.stringify({ results: [], total: 0, page, pages: 0, limit }, null, 2));
+      console.log(JSON.stringify({ results: [], total: 0, page, pages: 0, limit, approximate: false }, null, 2));
     }
     return;
   }
@@ -439,7 +543,10 @@ export async function cmdSearch(positional: string[], flags: Record<string, unkn
   spinner.success({ text: envelope.results.length + ' result(s) found' });
 
   if (flags['json']) {
-    console.log(JSON.stringify(envelope, null, 2));
+    // `approximate` is true when these results came from the semantic fallback
+    // tier — lets scripts distinguish exact keyword hits from closest matches.
+    const approximate = envelope.results.some(r => r.approximate === true);
+    console.log(JSON.stringify({ ...envelope, approximate }, null, 2));
     return;
   }
 

@@ -4,6 +4,16 @@ All notable changes to the `agent-root` CLI are documented in this file. Format 
 
 ## [Unreleased]
 
+### Added
+
+- `search` now falls back to the registry's hybrid semantic endpoint
+  (`/api/search`, BM25 + vector RRF) when keyword search returns no results.
+  Natural-language queries like "skill to pay in USDC" surface relevant records
+  under a "closest semantic matches" heading, each tagged by match type
+  (`{hybrid}`/`{vector}`/`{keyword}`). Add `--no-semantic` to opt out
+  (keyword-only). One request per failed search; `--all` unaffected. `--json`
+  gains a top-level `approximate` boolean.
+
 ## [0.3.0] 2026-05-20
 
 First standalone release. Cut from the independent
