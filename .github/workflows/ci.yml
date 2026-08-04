@@ -42,7 +42,7 @@ jobs:
             echo "present=false" >> $GITHUB_OUTPUT
           fi
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v6.0.9
         if: steps.vendor.outputs.present == 'true'
 
       - uses: actions/setup-node@v6
